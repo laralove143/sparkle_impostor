@@ -91,3 +91,32 @@
     variant_size_differences,
 )]
 #![doc = include_str!("../README.md")]
+
+use sparkle_convenience::reply::Reply;
+use twilight_model::{
+    id::{
+        marker::{ChannelMarker, GuildMarker, UserMarker},
+        Id,
+    },
+    util::ImageHash,
+};
+
+/// The message to clone, also the entrypoint of this library
+///
+/// Any of the fields, including the wrapped [`Reply`], can be modified to
+/// change the executed message
+#[derive(Debug)]
+pub struct MessageSource {
+    /// The ID of the channel the message is in
+    pub channel_id: Id<ChannelMarker>,
+    /// The ID of the guild the message is in, if it's in a guild
+    pub guild_id: Option<Id<GuildMarker>>,
+    /// The ID of the message's author
+    pub author_id: Id<UserMarker>,
+    /// The global avatar of the message's author, if there is one
+    pub user_avatar: Option<ImageHash>,
+    /// The guild avatar of the message's author, if there is one
+    pub member_avatar: Option<ImageHash>,
+    /// The other properties of the message
+    pub reply: Reply,
+}
