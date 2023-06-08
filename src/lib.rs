@@ -54,25 +54,21 @@
     rustdoc::missing_crate_level_docs,
     rustdoc::private_doc_tests,
     absolute_paths_not_starting_with_crate,
-    elided_lifetimes_in_paths
+    elided_lifetimes_in_paths,
     explicit_outlives_requirements,
-    fuzzy-provenance-casts,
     keyword_idents,
     let_underscore_drop,
-    lossy_provenance_casts,
     macro_use_extern_crate,
     meta_variable_misuse,
     missing_abi,
     missing_copy_implementations,
     missing_debug_implementations,
     missing_docs,
-    must_not_suspend,
     non_ascii_idents,
-    non_exhaustive_omitted_patterns,
     noop_method_call,
     pointer_structural_match,
     rust_2021_incompatible_or_patterns,
-    rust_2021_prefixes_incompatible_syntax
+    rust_2021_prefixes_incompatible_syntax,
     rust_2021_prelude_collisions,
     single_use_lifetimes,
     trivial_casts,
@@ -89,6 +85,11 @@
     unused_results,
     unused_tuple_struct_fields,
     variant_size_differences,
+    // nightly lints:
+    // fuzzy_provenance_casts,
+    // lossy_provenance_casts,
+    // must_not_suspend,
+    // non_exhaustive_omitted_patterns,
 )]
 #![doc = include_str!("../README.md")]
 
