@@ -1,0 +1,15 @@
+[package]
+name = "sparkle-impostor"
+version = "0.15.0"
+edition = "2021"
+authors = ["Lara Kayaalp <me@laralove.gay>"]
+description = "A third party crate for Twilight to execute Discord webhooks that clone an existing message"
+repository = "https://github.com/laralove143/sparkle-impostor"
+license = "ISC"
+keywords = ["discord", "discord-api", "twilight"]
+categories = ["api-bindings", "asynchronous"]
+
+[dependencies]
+twilight-http = "0.15"
+twilight-model = "0.15"
+sparkle-convenience = "0.16.0-rc.1"
