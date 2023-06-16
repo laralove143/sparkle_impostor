@@ -18,7 +18,6 @@
     clippy::float_cmp_const,
     clippy::fn_to_numeric_cast_any,
     clippy::format_push_string,
-    clippy::get_unwrap,
     clippy::if_then_some_else_none,
     clippy::indexing_slicing,
     clippy::integer_division,
@@ -101,6 +100,8 @@ use twilight_model::channel::{
 use crate::error::Error;
 
 pub mod error;
+#[cfg(test)]
+mod tests;
 
 /// Clone the passed [`Message`]
 ///

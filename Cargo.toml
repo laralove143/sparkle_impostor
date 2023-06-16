@@ -9,6 +9,11 @@ license = "ISC"
 keywords = ["discord", "discord-api", "twilight"]
 categories = ["api-bindings", "asynchronous"]
 
+[dev-dependencies]
+tokio = { version = "1.28", features = ["macros"] }
+anyhow = "1.0"
+dotenvy = "0.15"
+
 [dependencies]
 twilight-http = "0.15"
 twilight-model = "0.15"
