@@ -14,11 +14,6 @@ pub enum Error {
     /// Source message has a component
     #[error("source message has a component")]
     SourceComponent,
-    /// Source message's content is over 2000 characters
-    ///
-    /// This happens when the author has used Nitro perks
-    #[error("source message's content is over 2000 characters")]
-    SourceContentTooLarge,
     /// Source message has a reaction
     #[error("source message has a reaction")]
     SourceReaction,
@@ -35,6 +30,12 @@ pub enum Error {
     #[error("source message is a system message")]
     SourceSystem,
     /// An Twilight HTTP error occurred
+    /// Source message's content is invalid
+    ///
+    /// This happens when the author has used Nitro perks to send a message with
+    /// over 2000 characters
+    #[error("source message's content is invalid")]
+    SourceContentInvalid,
     #[error("{0}")]
     Http(#[from] twilight_http::Error),
     /// A deserialize body error was returned

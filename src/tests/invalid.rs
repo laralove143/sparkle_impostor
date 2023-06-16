@@ -1,6 +1,4 @@
-use std::fmt::format;
-
-use twilight_http::request::channel::{message::CreateMessage, reaction::RequestReactionType};
+use twilight_http::request::channel::reaction::RequestReactionType;
 use twilight_model::{
     channel::message::{
         component::{ActionRow, Button, ButtonStyle},
