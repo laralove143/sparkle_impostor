@@ -82,7 +82,6 @@
     unused_lifetimes,
     unused_macro_rules,
     unused_qualifications,
-    unused_results,
     unused_tuple_struct_fields,
     variant_size_differences,
     // nightly lints:
@@ -93,31 +92,175 @@
 )]
 #![doc = include_str!("../README.md")]
 
-use sparkle_convenience::reply::Reply;
-use twilight_model::{
-    id::{
-        marker::{ChannelMarker, GuildMarker, UserMarker},
-        Id,
-    },
-    util::ImageHash,
+use twilight_http::Client;
+use twilight_model::channel::{
+    message::{MessageFlags, MessageType},
+    Message,
 };
 
-/// The message to clone, also the entrypoint of this library
+use crate::error::Error;
+
+pub mod error;
+
+/// Clone the passed [`Message`]
 ///
-/// Any of the fields, including the wrapped [`Reply`], can be modified to
-/// change the executed message
-#[derive(Debug)]
-pub struct MessageSource {
-    /// The ID of the channel the message is in
-    pub channel_id: Id<ChannelMarker>,
-    /// The ID of the guild the message is in, if it's in a guild
-    pub guild_id: Option<Id<GuildMarker>>,
-    /// The ID of the message's author
-    pub author_id: Id<UserMarker>,
-    /// The global avatar of the message's author, if there is one
-    pub user_avatar: Option<ImageHash>,
-    /// The guild avatar of the message's author, if there is one
-    pub member_avatar: Option<ImageHash>,
-    /// The other properties of the message
-    pub reply: Reply,
+/// The message can be modified to override some fields, for example to clone it
+/// to another channel
+///
+/// Executes a webhook imitating the message
+///
+/// Creates a webhook called "Message Cloner" if one made by the bot in the
+/// channel doesn't exist
+///
+/// # Warnings
+///
+/// If the message has a reply, it will be stripped, since webhook messages
+/// can't have references
+///
+/// Make sure the bot has these required permissions:
+/// - [`Permissions::SEND_TTS_MESSAGES`]
+/// - [`Permissions::MENTION_EVERYONE`]
+/// - [`Permissions::USE_EXTERNAL_EMOJIS`]
+/// - [`Permissions::MANAGE_WEBHOOKS`]
+///
+/// # Errors
+///
+/// Returns [`Error::SourceRichPresence`] if the message is related to rich
+/// presence, which can't be recreated by bots
+///
+/// Returns [`Error::SourceAttachment`] if the message has an attachment,
+/// this will be handled more gracefully in the future
+///
+/// Returns [`Error::SourceComponent`] if the message has a component, which
+/// would be broken since the components would then be sent to the cloner
+/// bot
+///
+/// Returns [`Error::SourceReaction`] if the message has a reaction, this
+/// will be handled more gracefully in the future
+///
+/// Returns [`Error::SourceSticker`] if the message has a sticker, which
+/// webhook messages can't have
+///
+/// Returns [`Error::SourceThread`] if the message has a thread created from
+/// it, this will be handled more gracefully in the future
+///
+/// Returns [`Error::SourceVoice`] if the message is a voice message, which
+/// bots currently can't create
+///
+/// Returns [`Error::SourceSystem`] of the message's type isn't
+/// [`MessageType::Regular`] or [`MessageType::Reply`] or has role
+/// subscription data, which is an edge-case that can't be replicated
+/// correctly
+///
+/// Returns [`Error::Http`] if getting or creating the webhook fails
+///
+/// Returns [`Error::DeserializeBody`] if deserializing the webhook fails
+///
+/// Returns [`Error::Validation`] if the webhook name is invalid
+///
+/// Returns [`Error::MessageValidation`] if the given message is invalid,
+/// shouldn't happen unless the message was mutated
+///
+/// # Panics
+///
+/// If the webhook that was just created doesn't have a token
+pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error> {
+    if message.activity.is_some() || message.application.is_some() {
+        return Err(Error::SourceRichPresence);
+    }
+    if !message.attachments.is_empty() {
+        return Err(Error::SourceAttachment);
+    }
+    if !message.components.is_empty() {
+        return Err(Error::SourceComponent);
+    }
+    if !message.reactions.is_empty() {
+        return Err(Error::SourceReaction);
+    }
+    if !message.sticker_items.is_empty() {
+        return Err(Error::SourceSticker);
+    }
+    if message.thread.is_some()
+        || message
+            .flags
+            .is_some_and(|flags| flags.contains(MessageFlags::HAS_THREAD))
+    {
+        return Err(Error::SourceThread);
+    }
+    if message
+        .flags
+        .is_some_and(|flags| flags.contains(MessageFlags::IS_VOICE_MESSAGE))
+    {
+        return Err(Error::SourceVoice);
+    }
+    if !matches!(message.kind, MessageType::Regular | MessageType::Reply)
+        || message.role_subscription_data.is_some()
+    {
+        return Err(Error::SourceSystem);
+    }
+
+    let webhook = if let Some(webhook) = http
+        .channel_webhooks(message.channel_id)
+        .await?
+        .models()
+        .await?
+        .into_iter()
+        .find(|webhook| webhook.token.is_some())
+    {
+        webhook
+    } else {
+        http.create_webhook(message.channel_id, "Message Cloner")?
+            .await?
+            .model()
+            .await?
+    };
+    let token = webhook.token.unwrap();
+
+    let avatar_url = if let (Some(guild_id), Some(avatar)) = (
+        message.guild_id,
+        message.member.as_ref().and_then(|member| member.avatar),
+    ) {
+        format!(
+            "https://cdn.discordapp.com/guilds/{guild_id}/users/{}/avatars/{avatar}.{}",
+            message.author.id,
+            if avatar.is_animated() { "gif" } else { "png" }
+        )
+    } else if let Some(avatar) = message.author.avatar {
+        format!(
+            "https://cdn.discordapp.com/avatars/{}/{avatar}.{}",
+            message.author.id,
+            if avatar.is_animated() { "gif" } else { "png" }
+        )
+    } else {
+        format!(
+            "https://cdn.discordapp.com/embed/avatars/{}.png",
+            if message.webhook_id.is_none() && message.author.discriminator == 0 {
+                (message.author.id.get() >> 22_u8) % 6
+            } else {
+                u64::from(message.author.discriminator % 5)
+            }
+        )
+    };
+
+    let mut execute_webhook = http
+        .execute_webhook(webhook.id, &token)
+        .content(&message.content)?
+        .username(
+            message
+                .member
+                .as_ref()
+                .and_then(|member| member.nick.as_ref())
+                .unwrap_or(&message.author.name),
+        )?
+        .avatar_url(&avatar_url)
+        .embeds(&message.embeds)?
+        .tts(message.tts);
+
+    if let Some(flags) = message.flags {
+        execute_webhook = execute_webhook.flags(flags);
+    }
+
+    execute_webhook.await?;
+
+    Ok(())
 }

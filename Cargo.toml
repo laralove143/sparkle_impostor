@@ -12,4 +12,5 @@ categories = ["api-bindings", "asynchronous"]
 [dependencies]
 twilight-http = "0.15"
 twilight-model = "0.15"
-sparkle-convenience = "0.16.0-rc.1"
+twilight-validate = "0.15"
+thiserror = "1.0"
