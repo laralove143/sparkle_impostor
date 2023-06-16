@@ -153,6 +153,8 @@ mod tests;
 /// subscription data, which is an edge-case that can't be replicated
 /// correctly
 ///
+/// Returns [`Error::SourceContentInvalid`] if the message's content is invalid
+///
 /// Returns [`Error::SourceUsernameInvalid`] if username of the message's author
 /// is invalid
 ///
