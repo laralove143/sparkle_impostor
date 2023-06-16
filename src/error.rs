@@ -14,6 +14,11 @@ pub enum Error {
     /// Source message has a component
     #[error("source message has a component")]
     SourceComponent,
+    /// Source message's content is over 2000 characters
+    ///
+    /// This happens when the author has used Nitro perks
+    #[error("source message's content is over 2000 characters")]
+    SourceContentTooLarge,
     /// Source message has a reaction
     #[error("source message has a reaction")]
     SourceReaction,

@@ -175,6 +175,9 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
     if !message.components.is_empty() {
         return Err(Error::SourceComponent);
     }
+    if message.content.chars().count() > 2000 {
+        return Err(Error::SourceContentTooLarge);
+    }
     if !message.reactions.is_empty() {
         return Err(Error::SourceReaction);
     }
