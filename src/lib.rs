@@ -148,7 +148,7 @@ mod tests;
 /// Returns [`Error::SourceVoice`] if the message is a voice message, which
 /// bots currently can't create
 ///
-/// Returns [`Error::SourceSystem`] of the message's type isn't
+/// Returns [`Error::SourceSystem`] if the message's type isn't
 /// [`MessageType::Regular`] or [`MessageType::Reply`] or has role
 /// subscription data, which is an edge-case that can't be replicated
 /// correctly
