@@ -29,13 +29,19 @@ pub enum Error {
     /// Source message is a system message
     #[error("source message is a system message")]
     SourceSystem,
-    /// An Twilight HTTP error occurred
     /// Source message's content is invalid
     ///
     /// This happens when the author has used Nitro perks to send a message with
     /// over 2000 characters
     #[error("source message's content is invalid")]
     SourceContentInvalid,
+    /// Username of the source message's author is invalid
+    ///
+    /// This happens because usernames or nicks don't have the same requirements
+    /// as webhook usernames
+    #[error("username of the source message's author is invalid")]
+    SourceUsernameInvalid,
+    /// An Twilight HTTP error occurred
     #[error("{0}")]
     Http(#[from] twilight_http::Error),
     /// A deserialize body error was returned

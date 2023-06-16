@@ -153,6 +153,9 @@ mod tests;
 /// subscription data, which is an edge-case that can't be replicated
 /// correctly
 ///
+/// Returns [`Error::SourceUsernameInvalid`] if username of the message's author
+/// is invalid
+///
 /// Returns [`Error::Http`] if getting or creating the webhook fails
 ///
 /// Returns [`Error::DeserializeBody`] if deserializing the webhook fails
@@ -199,8 +202,18 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
     {
         return Err(Error::SourceSystem);
     }
+
     twilight_validate::message::content(&message.content)
         .map_err(|_| Error::SourceContentInvalid)?;
+
+    let username = message
+        .member
+        .as_ref()
+        .and_then(|member| member.nick.as_ref())
+        .unwrap_or(&message.author.name);
+
+    twilight_validate::request::webhook_username(username)
+        .map_err(|_| Error::SourceUsernameInvalid)?;
 
     let webhook = if let Some(webhook) = http
         .channel_webhooks(message.channel_id)
@@ -248,13 +261,7 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
     let mut execute_webhook = http
         .execute_webhook(webhook.id, &token)
         .content(&message.content)?
-        .username(
-            message
-                .member
-                .as_ref()
-                .and_then(|member| member.nick.as_ref())
-                .unwrap_or(&message.author.name),
-        )?
+        .username(username)?
         .avatar_url(&avatar_url)
         .embeds(&message.embeds)?
         .tts(message.tts);
