@@ -171,6 +171,8 @@ mod tests;
 /// # Panics
 ///
 /// If the webhook that was just created doesn't have a token
+///
+/// If the message is in a thread and its parent ID is `None`
 pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error> {
     if message.activity.is_some() || message.application.is_some() {
         return Err(Error::SourceRichPresence);
@@ -205,7 +207,6 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
     {
         return Err(Error::SourceSystem);
     }
-
     twilight_validate::message::content(&message.content)
         .map_err(|_| Error::SourceContentInvalid)?;
 
@@ -214,12 +215,18 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
         .as_ref()
         .and_then(|member| member.nick.as_ref())
         .unwrap_or(&message.author.name);
-
     twilight_validate::request::webhook_username(username)
         .map_err(|_| Error::SourceUsernameInvalid)?;
 
+    let channel = http.channel(message.channel_id).await?.model().await?;
+    let (channel_id, thread_id) = if channel.kind.is_thread() {
+        (channel.parent_id.unwrap(), Some(channel.id))
+    } else {
+        (channel.id, None)
+    };
+
     let webhook = if let Some(webhook) = http
-        .channel_webhooks(message.channel_id)
+        .channel_webhooks(channel_id)
         .await?
         .models()
         .await?
@@ -228,7 +235,7 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
     {
         webhook
     } else {
-        http.create_webhook(message.channel_id, "Message Cloner")?
+        http.create_webhook(channel_id, "Message Cloner")?
             .await?
             .model()
             .await?
@@ -268,6 +275,10 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
         .avatar_url(&avatar_url)
         .embeds(&message.embeds)?
         .tts(message.tts);
+
+    if let Some(thread_id) = thread_id {
+        execute_webhook = execute_webhook.thread_id(thread_id);
+    }
 
     if let Some(flags) = message.flags {
         execute_webhook = execute_webhook.flags(flags);

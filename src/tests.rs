@@ -13,6 +13,7 @@ use twilight_model::{
 use crate::clone_message;
 
 mod avatar;
+mod thread;
 
 struct Context {
     http: Client,
