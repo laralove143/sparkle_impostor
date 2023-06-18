@@ -93,12 +93,9 @@
 #![doc = include_str!("../README.md")]
 
 use twilight_http::Client;
-use twilight_model::channel::{
-    message::{MessageFlags, MessageType},
-    Message,
-};
+use twilight_model::channel::Message;
 
-use crate::error::Error;
+use crate::error::{check_message, Error};
 
 pub mod error;
 #[cfg(test)]
@@ -174,41 +171,7 @@ mod tests;
 ///
 /// If the message is in a thread and its parent ID is `None`
 pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error> {
-    if message.activity.is_some() || message.application.is_some() {
-        return Err(Error::SourceRichPresence);
-    }
-    if !message.attachments.is_empty() {
-        return Err(Error::SourceAttachment);
-    }
-    if !message.components.is_empty() {
-        return Err(Error::SourceComponent);
-    }
-    if !message.reactions.is_empty() {
-        return Err(Error::SourceReaction);
-    }
-    if !message.sticker_items.is_empty() {
-        return Err(Error::SourceSticker);
-    }
-    if message.thread.is_some()
-        || message
-            .flags
-            .is_some_and(|flags| flags.contains(MessageFlags::HAS_THREAD))
-    {
-        return Err(Error::SourceThread);
-    }
-    if message
-        .flags
-        .is_some_and(|flags| flags.contains(MessageFlags::IS_VOICE_MESSAGE))
-    {
-        return Err(Error::SourceVoice);
-    }
-    if !matches!(message.kind, MessageType::Regular | MessageType::Reply)
-        || message.role_subscription_data.is_some()
-    {
-        return Err(Error::SourceSystem);
-    }
-    twilight_validate::message::content(&message.content)
-        .map_err(|_| Error::SourceContentInvalid)?;
+    check_message(message)?;
 
     let username = message
         .member
@@ -219,7 +182,7 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
         .map_err(|_| Error::SourceUsernameInvalid)?;
 
     let channel = http.channel(message.channel_id).await?.model().await?;
-    let (channel_id, thread_id) = if channel.kind.is_thread() {
+    let (channel_id, maybe_thread_id) = if channel.kind.is_thread() {
         (channel.parent_id.unwrap(), Some(channel.id))
     } else {
         (channel.id, None)
@@ -242,7 +205,31 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
     };
     let token = webhook.token.unwrap();
 
-    let avatar_url = if let (Some(guild_id), Some(avatar)) = (
+    let avatar_url = avatar_url(message);
+
+    let mut execute_webhook = http
+        .execute_webhook(webhook.id, &token)
+        .content(&message.content)?
+        .username(username)?
+        .avatar_url(&avatar_url)
+        .embeds(&message.embeds)?
+        .tts(message.tts);
+
+    if let Some(thread_id) = maybe_thread_id {
+        execute_webhook = execute_webhook.thread_id(thread_id);
+    }
+
+    if let Some(flags) = message.flags {
+        execute_webhook = execute_webhook.flags(flags);
+    }
+
+    execute_webhook.await?;
+
+    Ok(())
+}
+
+fn avatar_url(message: &Message) -> String {
+    if let (Some(guild_id), Some(avatar)) = (
         message.guild_id,
         message.member.as_ref().and_then(|member| member.avatar),
     ) {
@@ -266,25 +253,5 @@ pub async fn clone_message(message: &Message, http: &Client) -> Result<(), Error
                 u64::from(message.author.discriminator % 5)
             }
         )
-    };
-
-    let mut execute_webhook = http
-        .execute_webhook(webhook.id, &token)
-        .content(&message.content)?
-        .username(username)?
-        .avatar_url(&avatar_url)
-        .embeds(&message.embeds)?
-        .tts(message.tts);
-
-    if let Some(thread_id) = thread_id {
-        execute_webhook = execute_webhook.thread_id(thread_id);
     }
-
-    if let Some(flags) = message.flags {
-        execute_webhook = execute_webhook.flags(flags);
-    }
-
-    execute_webhook.await?;
-
-    Ok(())
 }
