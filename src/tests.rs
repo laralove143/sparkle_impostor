@@ -13,7 +13,6 @@ use twilight_model::id::marker::GuildMarker;
 use crate::{clone_message, error::Error};
 
 mod avatar;
-mod invalid;
 
 // noinspection SpellCheckingInspection
 #[rustfmt::skip]
