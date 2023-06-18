@@ -1,9 +1,9 @@
 use twilight_model::guild::{MemberFlags, PartialMember};
 
-use crate::{clone_message, error::Error, tests::Context};
+use crate::{clone_message, tests::Context};
 
 #[tokio::test]
-async fn default() -> Result<(), Error> {
+async fn default() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
     let mut message = ctx

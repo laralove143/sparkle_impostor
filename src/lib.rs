@@ -89,6 +89,7 @@
     // must_not_suspend,
     // non_exhaustive_omitted_patterns,
 )]
+#![allow(clippy::redundant_pub_crate)]
 #![doc = include_str!("../README.md")]
 
 use twilight_http::Client;

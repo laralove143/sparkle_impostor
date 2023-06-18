@@ -10,7 +10,7 @@ use twilight_model::{
     },
 };
 
-use crate::{clone_message, error::Error};
+use crate::clone_message;
 
 mod avatar;
 
@@ -69,7 +69,7 @@ impl Context {
 }
 
 #[tokio::test]
-async fn basic() -> Result<(), Error> {
+async fn basic() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
     let message = ctx
