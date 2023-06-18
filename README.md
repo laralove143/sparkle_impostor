@@ -17,6 +17,12 @@ Before starting, set these environment variables, you can also put them in a `.e
 - `BOT_TOKEN`: The token of the bot to use for testing
 - `CHANNEL_ID`: The channel in which the messages and webhooks will be crated
 
+Required permissions in the given `CHANNEL_ID`:
+
+- `VIEW_CHANNEL`
+- `MANAGE_WEBHOOKS`
+- `SEND_MESSAGES`
+
 Test with a single thread to avoid race conditions: `cargo test -- --test-threads=1`
 
 Some things can't be tested due to Discord limitations:
