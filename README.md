@@ -19,12 +19,8 @@ Before starting, set these environment variables, you can also put them in a `.e
 
 Test with a single thread to avoid race conditions: `cargo test -- --test-threads=1`
 
-The bot's username and avatar will be changed as part of the testing
-
 Some things can't be tested due to Discord limitations:
 
-- **GIF avatar:** Bots can't have a GIF avatar
-- **Guild avatar:** Bots can't have a guild avatar
 - **Rich presence messages:** Bots can't send rich presence messages
 - **Nitro content length:** Bots can't send messages that are over 2000 characters long
 - **Voice messages:** Bots can't send voice messages
