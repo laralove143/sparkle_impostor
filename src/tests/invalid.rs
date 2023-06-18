@@ -159,7 +159,7 @@ async fn thread_created() -> Result<(), anyhow::Error> {
 }
 
 #[tokio::test]
-async fn system() -> Result<(), anyhow::Error> {
+async fn system() -> Result<(), Error> {
     let ctx = Context::new().await;
 
     let pin_message = ctx
@@ -185,6 +185,27 @@ async fn system() -> Result<(), anyhow::Error> {
     assert!(matches!(
         clone_message(&message, &ctx.http).await,
         Err(Error::SourceSystem)
+    ));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn content() -> Result<(), Error> {
+    let ctx = Context::new().await;
+
+    let mut message = ctx
+        .create_message()
+        .content(&message_content("content too long"))?
+        .await?
+        .model()
+        .await?;
+
+    message.content = "a".repeat(2001);
+
+    assert!(matches!(
+        clone_message(&message, &ctx.http).await,
+        Err(Error::SourceContentInvalid)
     ));
 
     Ok(())
