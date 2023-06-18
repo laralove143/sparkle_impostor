@@ -24,9 +24,3 @@ Required permissions in the given `CHANNEL_ID`:
 - `SEND_MESSAGES`
 
 Test with a single thread to avoid race conditions: `cargo test -- --test-threads=1`
-
-Some things can't be tested due to Discord limitations:
-
-- **Rich presence messages:** Bots can't send rich presence messages
-- **Nitro content length:** Bots can't send messages that are over 2000 characters long
-- **Voice messages:** Bots can't send voice messages
