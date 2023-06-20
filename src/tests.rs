@@ -11,7 +11,7 @@ use twilight_model::{
     },
 };
 
-use crate::MessageSource;
+use crate::MessageSourceBuilder;
 
 mod avatar;
 mod thread;
@@ -85,7 +85,8 @@ impl Context {
     }
 
     async fn clone_message(&self, message: &Message) {
-        MessageSource::from_message(message)
+        MessageSourceBuilder::new()
+            .build_from_message(message)
             .unwrap()
             .create(&self.http)
             .await
