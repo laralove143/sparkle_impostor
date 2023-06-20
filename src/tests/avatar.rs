@@ -27,27 +27,23 @@ async fn default() -> Result<(), anyhow::Error> {
 async fn non_animated() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let avatar = match ctx.owner.user.avatar {
-        Some(avatar) if !avatar.is_animated() => avatar,
-        _ => {
-            ctx.create_message()
-                .content(
-                    "can't test non-animated image avatars, bot's owner doesn't have a \
-                     non-animated image avatar",
-                )?
-                .await?;
-            return Ok(());
-        }
+    let Some(avatar) = ctx.member.user.avatar else {
+        ctx.create_message()
+            .content(
+                "can't test non-animated image avatars, bot doesn't have an image avatar",
+            )?
+            .await?;
+        return Ok(());
     };
 
     let mut message = ctx
         .create_message()
-        .content("non-animated avatar *(should be bot owner's avatar)*")?
+        .content("non-animated avatar *(should be bot's avatar)*")?
         .await?
         .model()
         .await?;
 
-    message.author.id = ctx.owner.user.id;
+    message.author.id = ctx.member.user.id;
     message.author.avatar = Some(avatar);
 
     ctx.clone_message(&message).await;

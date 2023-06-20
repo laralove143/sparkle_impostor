@@ -20,6 +20,7 @@ struct Context {
     http: Client,
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
+    member: Member,
     owner: Member,
 }
 
@@ -29,6 +30,7 @@ impl Context {
 
         let http = Client::new(env::var("BOT_TOKEN").unwrap());
         let channel_id = env::var("CHANNEL_ID").unwrap().parse().unwrap();
+
         let guild_id = http
             .channel(channel_id)
             .await
@@ -38,6 +40,18 @@ impl Context {
             .unwrap()
             .guild_id
             .unwrap();
+
+        let member = http
+            .guild_member(
+                guild_id,
+                http.current_user().await.unwrap().model().await.unwrap().id,
+            )
+            .await
+            .unwrap()
+            .model()
+            .await
+            .unwrap();
+
         let owner = http
             .guild_member(
                 guild_id,
@@ -61,6 +75,7 @@ impl Context {
             http,
             guild_id,
             channel_id,
+            member,
             owner,
         }
     }
