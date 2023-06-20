@@ -1,6 +1,6 @@
 use twilight_model::channel::ChannelType;
 
-use crate::{clone_message, tests::Context};
+use crate::tests::Context;
 
 #[tokio::test]
 async fn thread() -> Result<(), anyhow::Error> {
@@ -24,7 +24,7 @@ async fn thread() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    clone_message(&message, &ctx.http).await?;
+    ctx.clone_message(&message).await;
 
     Ok(())
 }

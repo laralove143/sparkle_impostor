@@ -1,6 +1,6 @@
 use twilight_model::guild::{MemberFlags, PartialMember};
 
-use crate::{clone_message, tests::Context};
+use crate::tests::Context;
 
 #[tokio::test]
 async fn default() -> Result<(), anyhow::Error> {
@@ -18,7 +18,7 @@ async fn default() -> Result<(), anyhow::Error> {
         member.avatar = None;
     }
 
-    clone_message(&message, &ctx.http).await?;
+    ctx.clone_message(&message).await;
 
     Ok(())
 }
@@ -50,7 +50,7 @@ async fn non_animated() -> Result<(), anyhow::Error> {
     message.author.id = ctx.owner.user.id;
     message.author.avatar = Some(avatar);
 
-    clone_message(&message, &ctx.http).await?;
+    ctx.clone_message(&message).await;
 
     Ok(())
 }
@@ -81,7 +81,7 @@ async fn animated() -> Result<(), anyhow::Error> {
     message.author.id = ctx.owner.user.id;
     message.author.avatar = Some(avatar);
 
-    clone_message(&message, &ctx.http).await?;
+    ctx.clone_message(&message).await;
 
     Ok(())
 }
@@ -122,7 +122,7 @@ async fn guild() -> Result<(), anyhow::Error> {
         user: None,
     });
 
-    clone_message(&message, &ctx.http).await?;
+    ctx.clone_message(&message).await;
 
     Ok(())
 }

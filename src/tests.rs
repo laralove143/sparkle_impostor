@@ -3,6 +3,7 @@ use std::env;
 use dotenvy::dotenv;
 use twilight_http::{request::channel::message::CreateMessage, Client};
 use twilight_model::{
+    channel::Message,
     guild::Member,
     id::{
         marker::{ChannelMarker, GuildMarker},
@@ -10,7 +11,7 @@ use twilight_model::{
     },
 };
 
-use crate::clone_message;
+use crate::MessageSource;
 
 mod avatar;
 mod thread;
@@ -67,6 +68,14 @@ impl Context {
     const fn create_message(&self) -> CreateMessage<'_> {
         self.http.create_message(self.channel_id)
     }
+
+    async fn clone_message(&self, message: &Message) {
+        MessageSource::from_message(message)
+            .unwrap()
+            .create(&self.http)
+            .await
+            .unwrap();
+    }
 }
 
 #[tokio::test]
@@ -80,7 +89,7 @@ async fn basic() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    clone_message(&message, &ctx.http).await?;
+    ctx.clone_message(&message).await;
 
     Ok(())
 }
