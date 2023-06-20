@@ -281,7 +281,7 @@ impl<'message> MessageSource<'message> {
     /// If the webhook that was just created doesn't have a token
     ///
     /// If the message is in a thread and its parent ID is `None`
-    pub async fn create(self, http: &Client) -> Result<(), Error> {
+    pub async fn create(&self, http: &Client) -> Result<(), Error> {
         let channel = http.channel(self.channel_id).await?.model().await?;
         let (channel_id, maybe_thread_id) = if channel.kind.is_thread() {
             (channel.parent_id.unwrap(), Some(channel.id))
