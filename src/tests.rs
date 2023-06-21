@@ -11,15 +11,17 @@ use twilight_model::{
     },
 };
 
-use crate::MessageSourceBuilder;
+use crate::{error::Error, MessageSourceBuilder};
 
 mod avatar;
+mod forum;
 mod thread;
 
 struct Context {
     http: Client,
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
+    forum_channel_id: Id<ChannelMarker>,
     member: Member,
     owner: Member,
 }
@@ -30,6 +32,7 @@ impl Context {
 
         let http = Client::new(env::var("BOT_TOKEN").unwrap());
         let channel_id = env::var("CHANNEL_ID").unwrap().parse().unwrap();
+        let forum_channel_id = env::var("FORUM_CHANNEL_ID").unwrap().parse().unwrap();
 
         let guild_id = http
             .channel(channel_id)
@@ -75,6 +78,7 @@ impl Context {
             http,
             guild_id,
             channel_id,
+            forum_channel_id,
             member,
             owner,
         }
@@ -84,13 +88,13 @@ impl Context {
         self.http.create_message(self.channel_id)
     }
 
-    async fn clone_message(&self, message: &Message) {
+    async fn clone_message(&self, message: &Message) -> Result<(), Error> {
         MessageSourceBuilder::new()
-            .build_from_message(message)
-            .unwrap()
+            .build_from_message(message)?
             .create(&self.http)
-            .await
-            .unwrap();
+            .await?;
+
+        Ok(())
     }
 }
 
@@ -105,7 +109,7 @@ async fn basic() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.clone_message(&message).await;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }

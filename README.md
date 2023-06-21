@@ -16,11 +16,14 @@ Before starting, set these environment variables, you can also put them in a `.e
 
 - `BOT_TOKEN`: The token of the bot to use for testing
 - `CHANNEL_ID`: The channel in which the messages and webhooks will be crated
+- `FORUM_CHANNEL_ID`: The forum channel in which cloning messages/threads in forum channels will be tested
 
-Required permissions in the given `CHANNEL_ID`:
+Required permissions in the given `CHANNEL_ID` and `FORUM_CHANNEL_ID`:
 
 - `VIEW_CHANNEL`
 - `MANAGE_WEBHOOKS`
 - `SEND_MESSAGES`
+- `CREATE_POSTS`
+- `SEND_MESSAGES_IN_POSTS`
 
 Test with a single thread to avoid race conditions: `cargo test -- --test-threads=1`

@@ -25,7 +25,7 @@ async fn thread() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.clone_message(&message).await;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }

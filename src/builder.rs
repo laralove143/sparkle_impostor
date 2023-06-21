@@ -56,8 +56,9 @@ impl MessageSourceBuilder {
     /// Returns [`Error::SourceSticker`] if the message has a sticker, which
     /// webhook messages can't have
     ///
-    /// Returns [`Error::SourceThread`] if the message has a thread created from
-    /// it, this will be handled more gracefully in the future
+    /// Returns [`Error::SourceThread`] if the message has a thread or forum
+    /// post created from it, this will be handled more gracefully in the
+    /// future
     ///
     /// Returns [`Error::SourceVoice`] if the message is a voice message, which
     /// bots currently can't create
@@ -89,6 +90,7 @@ impl MessageSourceBuilder {
             return Err(Error::SourceSticker);
         }
         if message.thread.is_some()
+            || message.id == message.channel_id.cast()
             || message
                 .flags
                 .is_some_and(|flags| flags.contains(MessageFlags::HAS_THREAD))

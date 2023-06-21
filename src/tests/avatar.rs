@@ -18,7 +18,7 @@ async fn default() -> Result<(), anyhow::Error> {
         member.avatar = None;
     }
 
-    ctx.clone_message(&message).await;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }
@@ -46,7 +46,7 @@ async fn non_animated() -> Result<(), anyhow::Error> {
     message.author.id = ctx.member.user.id;
     message.author.avatar = Some(avatar);
 
-    ctx.clone_message(&message).await;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }
@@ -77,7 +77,7 @@ async fn animated() -> Result<(), anyhow::Error> {
     message.author.id = ctx.owner.user.id;
     message.author.avatar = Some(avatar);
 
-    ctx.clone_message(&message).await;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }
@@ -118,7 +118,7 @@ async fn guild() -> Result<(), anyhow::Error> {
         user: None,
     });
 
-    ctx.clone_message(&message).await;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }
