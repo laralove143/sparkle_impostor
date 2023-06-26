@@ -92,7 +92,6 @@
 #![allow(clippy::redundant_pub_crate)]
 #![doc = include_str!("../README.md")]
 
-pub use builder::MessageSourceBuilder;
 use twilight_http::Client;
 use twilight_model::{
     channel::message::{Embed, MessageFlags},
@@ -101,34 +100,22 @@ use twilight_model::{
 
 use crate::error::Error;
 
-mod builder;
+mod constructor;
 pub mod error;
 #[cfg(test)]
 mod tests;
-
-/// Info about the thread [`MessageSource`] is in
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ThreadInfo {
-    /// The thread has been checked
-    ///
-    /// `None` if the message isn't in a thread, the thread's ID if it is
-    Known(Option<Id<ChannelMarker>>),
-    /// Thread info hasn't been checked
-    Unknown,
-}
+mod thread;
 
 /// A message that can be cloned
 ///
 /// Can be mutated to override some fields, for example to clone it to another
-/// channel
-///
-/// Created using [`MessageSourceBuilder`] or a struct literal
+/// channel, but fields starting with `source` shouldn't be mutated
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MessageSource<'message> {
+pub struct MessageSource<'msg> {
     /// Content of the message
-    pub content: &'message str,
+    pub content: &'msg str,
     /// Embeds in the message
-    pub embeds: &'message [Embed],
+    pub embeds: &'msg [Embed],
     /// Whether the message has text-to-speech enabled
     pub tts: bool,
     /// Flags of the message
@@ -138,20 +125,15 @@ pub struct MessageSource<'message> {
     /// If the message is in a thread, this should be the parent thread's ID
     pub channel_id: Id<ChannelMarker>,
     /// Username of the message's author
-    pub username: &'message str,
+    pub username: &'msg str,
     /// URL of message author's avatar
     pub avatar_url: String,
     /// Info about the message's thread
-    pub thread_info: ThreadInfo,
-    /// Info about how to handle certain things in creating the message
-    pub builder: MessageSourceBuilder,
+    pub thread_info: thread::Info,
 }
 
 impl MessageSource<'_> {
     /// Executes a webhook using the given source
-    ///
-    /// Takes a mutable reference to save the received thread info, if thread
-    /// info is unknown and not set to be ignored
     ///
     /// Creates a webhook called "Message Cloner" if one made by the bot in the
     /// channel doesn't exist
@@ -164,17 +146,18 @@ impl MessageSource<'_> {
     ///
     /// # Warnings
     ///
+    /// Other methods on [`MessageSource`] are provided to handle edge-cases,
+    /// not calling them before this may make this method fail
+    ///
     /// If the message has a reply, it will be stripped, since webhook messages
     /// can't have references
     ///
     /// # Errors
     ///
-    /// Returns [`Error::Http`] if getting the channel or webhook, or creating
-    /// the webhook fails, or threads are set to be ignored and the message is
-    /// in a thread
+    /// Returns [`Error::Http`] if getting, creating or executing the webhook
+    /// fails
     ///
-    /// Returns [`Error::DeserializeBody`] if deserializing the channel or
-    /// webhook fails
+    /// Returns [`Error::DeserializeBody`] if deserializing the webhook fails
     ///
     /// Returns [`Error::Validation`] if the webhook name is invalid
     ///
@@ -184,18 +167,7 @@ impl MessageSource<'_> {
     /// # Panics
     ///
     /// If the webhook that was just created doesn't have a token
-    ///
-    /// If the message is in a thread, it's not ignored and its parent ID is
-    /// `None`
-    pub async fn create(&mut self, http: &Client) -> Result<(), Error> {
-        if self.thread_info == ThreadInfo::Unknown && !self.builder.ignore_threads {
-            let channel = http.channel(self.channel_id).await?.model().await?;
-            if channel.kind.is_thread() {
-                self.thread_info = ThreadInfo::Known(Some(channel.id));
-                self.channel_id = channel.parent_id.unwrap();
-            };
-        }
-
+    pub async fn create(&self, http: &Client) -> Result<(), Error> {
         let webhook = if let Some(webhook) = http
             .channel_webhooks(self.channel_id)
             .await?
@@ -221,7 +193,7 @@ impl MessageSource<'_> {
             .embeds(self.embeds)?
             .tts(self.tts);
 
-        if let ThreadInfo::Known(Some(thread_id)) = self.thread_info {
+        if let thread::Info::Known(Some(thread_id)) = self.thread_info {
             execute_webhook = execute_webhook.thread_id(thread_id);
         }
 

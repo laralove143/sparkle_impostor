@@ -11,7 +11,7 @@ use twilight_model::{
     },
 };
 
-use crate::{error::Error, MessageSourceBuilder};
+use crate::{error::Error, MessageSource};
 
 mod avatar;
 mod forum;
@@ -89,8 +89,7 @@ impl Context {
     }
 
     async fn clone_message(&self, message: &Message) -> Result<(), Error> {
-        MessageSourceBuilder::new()
-            .build_from_message(message)?
+        MessageSource::from_message(message)?
             .create(&self.http)
             .await?;
 

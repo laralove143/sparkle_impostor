@@ -1,6 +1,6 @@
 use twilight_model::channel::ChannelType;
 
-use crate::{error::Error, tests::Context, MessageSourceBuilder};
+use crate::{error::Error, tests::Context, MessageSource};
 
 #[tokio::test]
 async fn thread() -> Result<(), anyhow::Error> {
@@ -25,7 +25,11 @@ async fn thread() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.clone_message(&message).await?;
+    MessageSource::from_message(&message)?
+        .handle_thread(&ctx.http)
+        .await?
+        .create(&ctx.http)
+        .await?;
 
     Ok(())
 }
@@ -54,11 +58,7 @@ async fn ignore_thread_message_in_thread() -> Result<(), anyhow::Error> {
         .await?;
 
     assert!(matches!(
-        MessageSourceBuilder::new()
-            .ignore_threads()
-            .build_from_message(&message)?
-            .create(&ctx.http)
-            .await,
+        ctx.clone_message(&message).await,
         Err(Error::Http(_))
     ));
 
@@ -76,11 +76,7 @@ async fn ignore_thread_message_not_in_thread() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    MessageSourceBuilder::new()
-        .ignore_threads()
-        .build_from_message(&message)?
-        .create(&ctx.http)
-        .await?;
+    ctx.clone_message(&message).await?;
 
     Ok(())
 }

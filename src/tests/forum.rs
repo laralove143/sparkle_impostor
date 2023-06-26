@@ -1,4 +1,4 @@
-use crate::{error::Error, tests::Context};
+use crate::{error::Error, tests::Context, MessageSource};
 
 #[tokio::test]
 async fn create() -> Result<(), anyhow::Error> {
@@ -42,7 +42,11 @@ async fn message() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.clone_message(&message).await?;
+    MessageSource::from_message(&message)?
+        .handle_thread(&ctx.http)
+        .await?
+        .create(&ctx.http)
+        .await?;
 
     Ok(())
 }

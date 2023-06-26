@@ -3,39 +3,9 @@ use twilight_model::channel::{
     Message,
 };
 
-use crate::{error::Error, MessageSource, ThreadInfo};
+use crate::{error::Error, thread, MessageSource};
 
-/// Defines how to clone messages
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(clippy::module_name_repetitions)]
-pub struct MessageSourceBuilder {
-    /// See [`MessageSourceBuilder::ignore_threads`]
-    pub ignore_threads: bool,
-}
-
-impl MessageSourceBuilder {
-    /// Create a new, default builder
-    #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            ignore_threads: false,
-        }
-    }
-
-    /// Don't handle the case of messages being in a thread
-    ///
-    /// Unless set, when the message doesn't contain thread info, it's received
-    /// using the HTTP request
-    ///
-    /// When set and the message is in a thread, a few invalid HTTP requests
-    /// will be made, it's not recommended to set this unless you know the
-    /// message isn't in a thread
-    #[must_use]
-    pub const fn ignore_threads(mut self) -> Self {
-        self.ignore_threads = true;
-        self
-    }
-
+impl<'msg> MessageSource<'msg> {
     /// Create [`MessageSource`] from a [`Message`]
     ///
     /// # Errors
@@ -73,7 +43,7 @@ impl MessageSourceBuilder {
     ///
     /// Returns [`Error::SourceUsernameInvalid`] if username of the message's
     /// author is invalid
-    pub fn build_from_message(self, message: &Message) -> Result<MessageSource<'_>, Error> {
+    pub fn from_message(message: &'msg Message) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
         }
@@ -149,8 +119,7 @@ impl MessageSourceBuilder {
                     }
                 )
             },
-            thread_info: ThreadInfo::Unknown,
-            builder: self,
+            thread_info: thread::Info::Unknown,
         })
     }
 }
