@@ -41,6 +41,15 @@ pub enum Error {
     /// as webhook usernames
     #[error("username of the source message's author is invalid")]
     SourceUsernameInvalid,
+    /// Source message isn't the last message in the channel
+    #[error("source message isn't the last message in the channel")]
+    SourceNotLast,
+    /// Too many messages were sent after the source message
+    #[error("too many messages were sent after the source message")]
+    SourceBeforeLimit,
+    /// The bot doesn't have [`Permissions::READ_MESSAGE_HISTORY`]
+    #[error("the bot doesn't have `READ_MESSAGE_HISTORY` permission")]
+    MissingPermissionReadMessageHistory,
     /// An Twilight HTTP error occurred
     #[error("{0}")]
     Http(#[from] twilight_http::Error),

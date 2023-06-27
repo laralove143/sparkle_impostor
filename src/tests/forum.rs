@@ -27,7 +27,7 @@ async fn message() -> Result<(), anyhow::Error> {
 
     let thread = ctx
         .http
-        .create_forum_thread(ctx.forum_channel_id, "impostor forum thread")
+        .create_forum_thread(ctx.forum_channel_id, "sparkle impostor forum thread")
         .message()
         .content("forum first message *(should not be cloned)*")?
         .await?

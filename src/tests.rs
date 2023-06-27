@@ -15,6 +15,7 @@ use crate::{error::Error, MessageSource};
 
 mod avatar;
 mod forum;
+mod not_last;
 mod thread;
 
 struct Context {
@@ -22,6 +23,7 @@ struct Context {
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
     forum_channel_id: Id<ChannelMarker>,
+    not_last_source_thread_id: Id<ChannelMarker>,
     member: Member,
     owner: Member,
 }
@@ -33,6 +35,13 @@ impl Context {
         let http = Client::new(env::var("BOT_TOKEN").unwrap());
         let channel_id = env::var("CHANNEL_ID").unwrap().parse().unwrap();
         let forum_channel_id = env::var("FORUM_CHANNEL_ID").unwrap().parse().unwrap();
+        let not_last_source_thread_id = if let Ok(var) = env::var("NOT_LAST_SOURCE_THREAD_ID") {
+            var.parse().unwrap()
+        } else {
+            not_last::create_source_thread(&http, channel_id)
+                .await
+                .unwrap()
+        };
 
         let guild_id = http
             .channel(channel_id)
@@ -79,6 +88,7 @@ impl Context {
             guild_id,
             channel_id,
             forum_channel_id,
+            not_last_source_thread_id,
             member,
             owner,
         }

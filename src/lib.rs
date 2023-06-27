@@ -95,13 +95,17 @@
 use twilight_http::Client;
 use twilight_model::{
     channel::message::{Embed, MessageFlags},
-    id::{marker::ChannelMarker, Id},
+    id::{
+        marker::{ChannelMarker, MessageMarker, WebhookMarker},
+        Id,
+    },
 };
 
 use crate::error::Error;
 
 mod constructor;
 pub mod error;
+pub mod not_last;
 #[cfg(test)]
 mod tests;
 mod thread;
@@ -112,6 +116,10 @@ mod thread;
 /// channel, but fields starting with `source` shouldn't be mutated
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MessageSource<'msg> {
+    /// Message's ID
+    pub source_id: Id<MessageMarker>,
+    /// ID of the channel the source message is in
+    pub source_channel_id: Id<ChannelMarker>,
     /// Content of the message
     pub content: &'msg str,
     /// Embeds in the message
@@ -130,9 +138,11 @@ pub struct MessageSource<'msg> {
     pub avatar_url: String,
     /// Info about the message's thread
     pub thread_info: thread::Info,
+    /// Webhook ID and token to execute to clone messages with
+    pub webhook: Option<(Id<WebhookMarker>, String)>,
 }
 
-impl MessageSource<'_> {
+impl<'msg> MessageSource<'msg> {
     /// Executes a webhook using the given source
     ///
     /// Creates a webhook called "Message Cloner" if one made by the bot in the
@@ -167,26 +177,12 @@ impl MessageSource<'_> {
     /// # Panics
     ///
     /// If the webhook that was just created doesn't have a token
-    pub async fn create(&self, http: &Client) -> Result<(), Error> {
-        let webhook = if let Some(webhook) = http
-            .channel_webhooks(self.channel_id)
-            .await?
-            .models()
-            .await?
-            .into_iter()
-            .find(|webhook| webhook.token.is_some())
-        {
-            webhook
-        } else {
-            http.create_webhook(self.channel_id, "Message Cloner")?
-                .await?
-                .model()
-                .await?
-        };
-        let token = webhook.token.unwrap();
+    pub async fn create(mut self, http: &Client) -> Result<MessageSource<'msg>, Error> {
+        self.set_webhook(http).await?;
+        let (webhook_id, webhook_token) = self.webhook.as_ref().unwrap();
 
         let mut execute_webhook = http
-            .execute_webhook(webhook.id, &token)
+            .execute_webhook(*webhook_id, webhook_token)
             .content(self.content)?
             .username(self.username)?
             .avatar_url(&self.avatar_url)
@@ -202,6 +198,29 @@ impl MessageSource<'_> {
         }
 
         execute_webhook.await?;
+
+        Ok(self)
+    }
+
+    async fn set_webhook(&mut self, http: &Client) -> Result<(), Error> {
+        if self.webhook.is_none() {
+            let webhook = if let Some(webhook) = http
+                .channel_webhooks(self.channel_id)
+                .await?
+                .models()
+                .await?
+                .into_iter()
+                .find(|webhook| webhook.token.is_some())
+            {
+                webhook
+            } else {
+                http.create_webhook(self.channel_id, "Message Cloner")?
+                    .await?
+                    .model()
+                    .await?
+            };
+            self.webhook = Some((webhook.id, webhook.token.unwrap()));
+        }
 
         Ok(())
     }

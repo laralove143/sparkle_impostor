@@ -84,6 +84,8 @@ impl<'msg> MessageSource<'msg> {
             .map_err(|_| Error::SourceUsernameInvalid)?;
 
         Ok(MessageSource {
+            source_id: message.id,
+            source_channel_id: message.channel_id,
             content: &message.content,
             embeds: &message.embeds,
             tts: message.tts,
@@ -120,6 +122,7 @@ impl<'msg> MessageSource<'msg> {
                 )
             },
             thread_info: thread::Info::Unknown,
+            webhook: None,
         })
     }
 }
