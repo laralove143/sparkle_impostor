@@ -37,7 +37,6 @@
     clippy::shadow_reuse,
     clippy::shadow_same,
     clippy::shadow_unrelated,
-    clippy::single_char_lifetime_names,
     clippy::str_to_string,
     clippy::string_add,
     clippy::string_slice,
@@ -115,15 +114,15 @@ mod thread;
 /// Can be mutated to override some fields, for example to clone it to another
 /// channel, but fields starting with `source` shouldn't be mutated
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MessageSource<'msg> {
+pub struct MessageSource<'a> {
     /// Message's ID
     pub source_id: Id<MessageMarker>,
     /// ID of the channel the source message is in
     pub source_channel_id: Id<ChannelMarker>,
     /// Content of the message
-    pub content: &'msg str,
+    pub content: &'a str,
     /// Embeds in the message
-    pub embeds: &'msg [Embed],
+    pub embeds: &'a [Embed],
     /// Whether the message has text-to-speech enabled
     pub tts: bool,
     /// Flags of the message
@@ -133,7 +132,7 @@ pub struct MessageSource<'msg> {
     /// If the message is in a thread, this should be the parent thread's ID
     pub channel_id: Id<ChannelMarker>,
     /// Username of the message's author
-    pub username: &'msg str,
+    pub username: &'a str,
     /// URL of message author's avatar
     pub avatar_url: String,
     /// Info about the message's thread
@@ -142,7 +141,7 @@ pub struct MessageSource<'msg> {
     pub webhook: Option<(Id<WebhookMarker>, String)>,
 }
 
-impl<'msg> MessageSource<'msg> {
+impl<'a> MessageSource<'a> {
     /// Executes a webhook using the given source
     ///
     /// Creates a webhook called "Message Cloner" if one made by the bot in the
@@ -177,7 +176,7 @@ impl<'msg> MessageSource<'msg> {
     /// # Panics
     ///
     /// If the webhook that was just created doesn't have a token
-    pub async fn create(mut self, http: &Client) -> Result<MessageSource<'msg>, Error> {
+    pub async fn create(mut self, http: &Client) -> Result<MessageSource<'a>, Error> {
         self.set_webhook(http).await?;
         let (webhook_id, webhook_token) = self.webhook.as_ref().unwrap();
 

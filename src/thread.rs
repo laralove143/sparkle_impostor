@@ -14,7 +14,7 @@ pub enum Info {
     Unknown,
 }
 
-impl<'msg> MessageSource<'msg> {
+impl<'a> MessageSource<'a> {
     /// Handle the message being in a thread
     ///
     /// This requires getting the channel with another HTTP request
@@ -33,7 +33,7 @@ impl<'msg> MessageSource<'msg> {
     /// # Panics
     ///
     /// If the thread's parent ID is `None`
-    pub async fn handle_thread(mut self, http: &Client) -> Result<MessageSource<'msg>, Error> {
+    pub async fn handle_thread(mut self, http: &Client) -> Result<MessageSource<'a>, Error> {
         if self.thread_info == Info::Unknown {
             let channel = http.channel(self.channel_id).await?.model().await?;
             if channel.kind.is_thread() {

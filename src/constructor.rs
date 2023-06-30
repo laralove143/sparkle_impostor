@@ -5,7 +5,7 @@ use twilight_model::channel::{
 
 use crate::{error::Error, thread, MessageSource};
 
-impl<'msg> MessageSource<'msg> {
+impl<'a> MessageSource<'a> {
     /// Create [`MessageSource`] from a [`Message`]
     ///
     /// # Errors
@@ -43,7 +43,7 @@ impl<'msg> MessageSource<'msg> {
     ///
     /// Returns [`Error::SourceUsernameInvalid`] if username of the message's
     /// author is invalid
-    pub fn from_message(message: &'msg Message) -> Result<Self, Error> {
+    pub fn from_message(message: &'a Message) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
         }

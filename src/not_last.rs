@@ -5,7 +5,7 @@ use twilight_model::channel::Message;
 
 use crate::{error::Error, MessageSource};
 
-impl<'msg> MessageSource<'msg> {
+impl<'a> MessageSource<'a> {
     /// Check if this is the last message in the channel, return
     /// [`Error::SourceNotLast`] if not
     ///
@@ -22,7 +22,7 @@ impl<'msg> MessageSource<'msg> {
     ///
     /// Returns [`Error::MissingPermissionReadMessageHistory`] if the bot
     /// doesn't have [`Permissions::READ_MESSAGE_HISTORY`]
-    pub async fn check_not_last(self, http: &Client) -> Result<MessageSource<'msg>, Error> {
+    pub async fn check_not_last(self, http: &Client) -> Result<MessageSource<'a>, Error> {
         let messages = http
             .channel_messages(self.channel_id)
             .limit(1)?
@@ -83,7 +83,7 @@ impl<'msg> MessageSource<'msg> {
         self,
         http: &Client,
         limit: Option<u16>,
-    ) -> Result<MessageSource<'msg>, Error> {
+    ) -> Result<MessageSource<'a>, Error> {
         let mut messages = vec![];
         loop {
             let message_batch = http
