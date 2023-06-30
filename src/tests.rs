@@ -99,8 +99,8 @@ impl Context {
     }
 
     async fn clone_message(&self, message: &Message) -> Result<(), Error> {
-        MessageSource::from_message(message)?
-            .create(&self.http)
+        MessageSource::from_message(message, &self.http)?
+            .create()
             .await?;
 
         Ok(())

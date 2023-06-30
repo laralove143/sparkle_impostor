@@ -113,7 +113,16 @@ mod thread;
 ///
 /// Can be mutated to override some fields, for example to clone it to another
 /// channel, but fields starting with `source` shouldn't be mutated
-#[derive(Debug, Clone, Eq, PartialEq)]
+///
+/// You can also provide some of the fields, for example from your cache, so
+/// that they won't be received over the HTTP API
+///
+/// # Warning
+///
+/// Many of the fields here are stateful, there are no guarantees on the
+/// validity of these since this doesn't have access to the gateway, this means
+/// you should use and drop this struct as fast as you can
+#[derive(Debug, Clone)]
 pub struct MessageSource<'a> {
     /// Message's ID
     pub source_id: Id<MessageMarker>,
@@ -139,6 +148,8 @@ pub struct MessageSource<'a> {
     pub thread_info: thread::Info,
     /// Webhook ID and token to execute to clone messages with
     pub webhook: Option<(Id<WebhookMarker>, String)>,
+    /// The client to use for requests
+    pub http: &'a Client,
 }
 
 impl<'a> MessageSource<'a> {
@@ -176,11 +187,12 @@ impl<'a> MessageSource<'a> {
     /// # Panics
     ///
     /// If the webhook that was just created doesn't have a token
-    pub async fn create(mut self, http: &Client) -> Result<MessageSource<'a>, Error> {
-        self.set_webhook(http).await?;
+    pub async fn create(mut self) -> Result<MessageSource<'a>, Error> {
+        self.set_webhook().await?;
         let (webhook_id, webhook_token) = self.webhook.as_ref().unwrap();
 
-        let mut execute_webhook = http
+        let mut execute_webhook = self
+            .http
             .execute_webhook(*webhook_id, webhook_token)
             .content(self.content)?
             .username(self.username)?
@@ -201,9 +213,10 @@ impl<'a> MessageSource<'a> {
         Ok(self)
     }
 
-    async fn set_webhook(&mut self, http: &Client) -> Result<(), Error> {
+    async fn set_webhook(&mut self) -> Result<(), Error> {
         if self.webhook.is_none() {
-            let webhook = if let Some(webhook) = http
+            let webhook = if let Some(webhook) = self
+                .http
                 .channel_webhooks(self.channel_id)
                 .await?
                 .models()
@@ -213,7 +226,8 @@ impl<'a> MessageSource<'a> {
             {
                 webhook
             } else {
-                http.create_webhook(self.channel_id, "Message Cloner")?
+                self.http
+                    .create_webhook(self.channel_id, "Message Cloner")?
                     .await?
                     .model()
                     .await?

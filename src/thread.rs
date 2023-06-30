@@ -1,4 +1,3 @@
-use twilight_http::Client;
 use twilight_model::id::{marker::ChannelMarker, Id};
 
 use crate::{error::Error, MessageSource};
@@ -33,9 +32,9 @@ impl<'a> MessageSource<'a> {
     /// # Panics
     ///
     /// If the thread's parent ID is `None`
-    pub async fn handle_thread(mut self, http: &Client) -> Result<MessageSource<'a>, Error> {
+    pub async fn handle_thread(mut self) -> Result<MessageSource<'a>, Error> {
         if self.thread_info == Info::Unknown {
-            let channel = http.channel(self.channel_id).await?.model().await?;
+            let channel = self.http.channel(self.channel_id).await?.model().await?;
             if channel.kind.is_thread() {
                 self.thread_info = Info::Known(Some(channel.id));
                 self.channel_id = channel.parent_id.unwrap();

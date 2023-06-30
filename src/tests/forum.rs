@@ -42,10 +42,10 @@ async fn message() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    MessageSource::from_message(&message)?
-        .handle_thread(&ctx.http)
+    MessageSource::from_message(&message, &ctx.http)?
+        .handle_thread()
         .await?
-        .create(&ctx.http)
+        .create()
         .await?;
 
     Ok(())

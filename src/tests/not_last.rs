@@ -75,8 +75,8 @@ async fn error() -> Result<(), anyhow::Error> {
         .await?;
 
     assert!(matches!(
-        MessageSource::from_message(&message)?
-            .check_not_last(&ctx.http)
+        MessageSource::from_message(&message, &ctx.http)?
+            .check_not_last()
             .await,
         Err(Error::SourceNotLast)
     ));
@@ -99,10 +99,10 @@ async fn create() -> Result<(), anyhow::Error> {
     ctx.create_message().content("2")?.await?;
     ctx.create_message().content("3")?.await?;
 
-    MessageSource::from_message(&message)?
-        .create(&ctx.http)
+    MessageSource::from_message(&message, &ctx.http)?
+        .create()
         .await?
-        .create_later_messages(&ctx.http, None)
+        .create_later_messages(None)
         .await?;
 
     Ok(())
@@ -127,10 +127,10 @@ async fn limit_under() -> Result<(), anyhow::Error> {
     ctx.create_message().content("3")?.await?;
 
     assert!(matches!(
-        MessageSource::from_message(&message)?
-            .create(&ctx.http)
+        MessageSource::from_message(&message, &ctx.http)?
+            .create()
             .await?
-            .create_later_messages(&ctx.http, Some(2))
+            .create_later_messages(Some(2))
             .await,
         Err(Error::SourceBeforeLimit)
     ));
@@ -156,10 +156,10 @@ async fn limit_over() -> Result<(), anyhow::Error> {
     ctx.create_message().content("2")?.await?;
     ctx.create_message().content("3")?.await?;
 
-    MessageSource::from_message(&message)?
-        .create(&ctx.http)
+    MessageSource::from_message(&message, &ctx.http)?
+        .create()
         .await?
-        .create_later_messages(&ctx.http, Some(3))
+        .create_later_messages(Some(3))
         .await?;
 
     Ok(())
@@ -197,7 +197,7 @@ async fn ratelimit() -> Result<(), anyhow::Error> {
 
     let message = messages.last_mut().unwrap();
 
-    let mut message_source = MessageSource::from_message(message)?;
+    let mut message_source = MessageSource::from_message(message, &ctx.http)?;
     message_source.channel_id = ctx
         .http
         .create_thread(
@@ -211,11 +211,11 @@ async fn ratelimit() -> Result<(), anyhow::Error> {
         .id;
 
     message_source
-        .handle_thread(&ctx.http)
+        .handle_thread()
         .await?
-        .create(&ctx.http)
+        .create()
         .await?
-        .create_later_messages(&ctx.http, None)
+        .create_later_messages(None)
         .await?;
 
     Ok(())

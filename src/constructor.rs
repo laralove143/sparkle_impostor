@@ -1,3 +1,4 @@
+use twilight_http::Client;
 use twilight_model::channel::{
     message::{MessageFlags, MessageType},
     Message,
@@ -43,7 +44,7 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::SourceUsernameInvalid`] if username of the message's
     /// author is invalid
-    pub fn from_message(message: &'a Message) -> Result<Self, Error> {
+    pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
         }
@@ -123,6 +124,7 @@ impl<'a> MessageSource<'a> {
             },
             thread_info: thread::Info::Unknown,
             webhook: None,
+            http,
         })
     }
 }

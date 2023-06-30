@@ -1,6 +1,6 @@
 //! Handling the message to clone not being the last one in the channel
 
-use twilight_http::{api_error::ApiError, Client};
+use twilight_http::api_error::ApiError;
 use twilight_model::channel::Message;
 
 use crate::{error::Error, MessageSource};
@@ -22,8 +22,9 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::MissingPermissionReadMessageHistory`] if the bot
     /// doesn't have [`Permissions::READ_MESSAGE_HISTORY`]
-    pub async fn check_not_last(self, http: &Client) -> Result<MessageSource<'a>, Error> {
-        let messages = http
+    pub async fn check_not_last(self) -> Result<MessageSource<'a>, Error> {
+        let messages = self
+            .http
             .channel_messages(self.channel_id)
             .limit(1)?
             .await?
@@ -81,12 +82,12 @@ impl<'a> MessageSource<'a> {
     /// is before it
     pub async fn create_later_messages(
         self,
-        http: &Client,
         limit: Option<u16>,
     ) -> Result<MessageSource<'a>, Error> {
         let mut messages = vec![];
         loop {
-            let message_batch = http
+            let message_batch = self
+                .http
                 .channel_messages(self.source_channel_id)
                 .limit(
                     // add 1 for message sent in self.create, 1 to check if above the limit
@@ -123,14 +124,14 @@ impl<'a> MessageSource<'a> {
         }
 
         for message_source in messages.iter().filter_map(|message| {
-            MessageSource::from_message(message).map_or(None, |mut source| {
+            MessageSource::from_message(message, self.http).map_or(None, |mut source| {
                 source.thread_info = self.thread_info;
                 source.channel_id = self.channel_id;
                 Some(source)
             })
         }) {
             for i in 0..=3_u8 {
-                match message_source.clone().create(http).await {
+                match message_source.clone().create().await {
                     Ok(_) => break,
                     Err(Error::Http(err))
                         if matches!(
