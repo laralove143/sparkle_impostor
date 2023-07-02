@@ -92,6 +92,8 @@
 #![doc = include_str!("../README.md")]
 
 use twilight_http::{request::channel::webhook::ExecuteWebhook, Client};
+#[cfg(doc)]
+use twilight_model::guild::Permissions;
 use twilight_model::{
     channel::message::{Embed, MessageFlags},
     id::{
