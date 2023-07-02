@@ -147,13 +147,14 @@ async fn create_later() -> Result<(), anyhow::Error> {
         .await?
         .id;
 
-    message_source
-        .handle_thread()
-        .await?
-        .create()
-        .await?
-        .create_later_messages()
-        .await?;
+    message_source = message_source.handle_thread().await?.create().await?;
+
+    let later_messages = message_source.later_messages().await?;
+
+    assert!(later_messages.iter().all(Result::is_ok));
+    for later_message in later_messages {
+        later_message?.create().await?;
+    }
 
     Ok(())
 }

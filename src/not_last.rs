@@ -1,6 +1,5 @@
 //! Handling the message to clone not being the last one in the channel
 
-use twilight_http::api_error::ApiError;
 use twilight_model::channel::Message;
 
 use crate::{error::Error, MessageSource};
@@ -49,77 +48,49 @@ impl<'a> MessageSource<'a> {
         Ok(self)
     }
 
-    /// Handle the message not being the last one in the channel by cloning all
-    /// messages sent after it
-    ///
-    /// This costs `messages_sent_after / 100 + messages_sent_after +
-    /// ratelimit_retries` additional requests, making this method
-    /// potentially very expensive if [`MessageSource::check_is_in_last`]
-    /// wasn't called, [`MessageSource::check_is_in_last`] also saves these
-    /// messages so that they're not requested again
-    ///
-    /// Because rate-limits for webhook executions can't be handled beforehand,
-    /// retries each execution up to 3 times, if all of these are rate-limited,
-    /// returns the HTTP error
+    /// Return [`MessageSource`] for messages sent after this
     ///
     /// Make sure the bot has these additional permissions
     /// - [`Permissions::READ_MESSAGE_HISTORY`]
     /// - [`Permissions::VIEW_CHANNEL`]
     ///
-    /// The documentation of [`MessageSource::create`] applies here as well
-    ///
     /// # Warnings
+    ///
+    /// This method is potentially very expensive unless
+    /// [`MessageSource::check_is_in_last`] was called
     ///
     /// This must be called after [`MessageSource::create`] to keep the message
     /// order
     ///
-    /// Messages that can't be cloned (See [`MessageSource::from_message`])
-    /// aren't resent
-    ///
-    /// If the bot doesn't have [`Permissions::READ_MESSAGE_HISTORY`], it'll act
-    /// as if this is the last message, since that's what Discord responds with
+    /// If the bot doesn't have [`Permissions::READ_MESSAGE_HISTORY`], it'll
+    /// always return an empty vector, since that's what Discord responds with
     ///
     /// # Errors
     ///
-    /// Returns [`Error::Http`] if getting channel messages or executing the
-    /// webhook fails, or if the execution was rate-limited 3 times
+    /// The vector element will be an error if the message can't be resent (See
+    /// [`MessageSource::from_message`])
+    ///
+    /// Returns [`Error::Http`] if getting channel messages fails
     ///
     /// Returns [`Error::DeserializeBody`] if deserializing channel messages
     /// fails
-    pub async fn create_later_messages(mut self) -> Result<MessageSource<'a>, Error> {
+    pub async fn later_messages(
+        &'a mut self,
+    ) -> Result<Vec<Result<MessageSource<'a>, Error>>, Error> {
         self.set_later_messages(None).await?;
 
-        for message in &self.later_messages.messages {
-            for i in 0..=3_u8 {
-                let Ok(mut message_source) =
-                    MessageSource::from_message(message, self.http) else {
-                    break;
-                };
-                message_source.thread_info = self.thread_info;
-                message_source.channel_id = self.channel_id;
-
-                match message_source.create().await {
-                    Ok(_) => break,
-                    Err(Error::Http(err))
-                        if matches!(
-                            err.kind(),
-                            twilight_http::error::ErrorType::Response {
-                                error: ApiError::Ratelimited(_),
-                                ..
-                            }
-                        ) =>
-                    {
-                        if i == 3 {
-                            return Err(Error::Http(err));
-                        }
-                        continue;
-                    }
-                    Err(err) => return Err(err),
-                }
-            }
-        }
-
-        Ok(self)
+        Ok(self
+            .later_messages
+            .messages
+            .iter()
+            .map(|message| {
+                MessageSource::from_message(message, self.http).map(|mut source| {
+                    source.thread_info = self.thread_info;
+                    source.channel_id = self.channel_id;
+                    source
+                })
+            })
+            .collect())
     }
 
     async fn set_later_messages(&mut self, limit: Option<u16>) -> Result<(), Error> {

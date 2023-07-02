@@ -91,7 +91,7 @@
 #![allow(clippy::redundant_pub_crate)]
 #![doc = include_str!("../README.md")]
 
-use twilight_http::Client;
+use twilight_http::{request::channel::webhook::ExecuteWebhook, Client};
 use twilight_model::{
     channel::message::{Embed, MessageFlags},
     id::{
@@ -166,6 +166,10 @@ impl<'a> MessageSource<'a> {
     /// - [`Permissions::USE_EXTERNAL_EMOJIS`]
     /// - [`Permissions::MANAGE_WEBHOOKS`]
     ///
+    /// Because rate-limits for webhook executions can't be handled
+    /// beforehand, retries each execution up to 3 times, if all of these
+    /// are rate-limited, returns the HTTP error
+    ///
     /// # Warnings
     ///
     /// Other methods on [`MessageSource`] are provided to handle edge-cases,
@@ -191,26 +195,27 @@ impl<'a> MessageSource<'a> {
     /// If the webhook that was just created doesn't have a token
     pub async fn create(mut self) -> Result<MessageSource<'a>, Error> {
         self.set_webhook().await?;
-        let (webhook_id, webhook_token) = self.webhook.as_ref().unwrap();
 
-        let mut execute_webhook = self
-            .http
-            .execute_webhook(*webhook_id, webhook_token)
-            .content(self.content)?
-            .username(self.username)?
-            .avatar_url(&self.avatar_url)
-            .embeds(self.embeds)?
-            .tts(self.tts);
-
-        if let thread::Info::Known(Some(thread_id)) = self.thread_info {
-            execute_webhook = execute_webhook.thread_id(thread_id);
+        for i in 0..=3_u8 {
+            match self.webhook_exec()?.await {
+                Ok(_) => break,
+                Err(err)
+                    if matches!(
+                        err.kind(),
+                        twilight_http::error::ErrorType::Response {
+                            error: twilight_http::api_error::ApiError::Ratelimited(_),
+                            ..
+                        }
+                    ) =>
+                {
+                    if i == 3 {
+                        return Err(Error::Http(err));
+                    }
+                    continue;
+                }
+                Err(err) => return Err(Error::Http(err)),
+            }
         }
-
-        if let Some(flags) = self.flags {
-            execute_webhook = execute_webhook.flags(flags);
-        }
-
-        execute_webhook.await?;
 
         self.later_messages.is_source_created = true;
 
@@ -240,5 +245,28 @@ impl<'a> MessageSource<'a> {
         }
 
         Ok(())
+    }
+
+    fn webhook_exec(&self) -> Result<ExecuteWebhook<'_>, Error> {
+        let (webhook_id, webhook_token) = self.webhook.as_ref().unwrap();
+
+        let mut execute_webhook = self
+            .http
+            .execute_webhook(*webhook_id, webhook_token)
+            .content(self.content)?
+            .username(self.username)?
+            .avatar_url(&self.avatar_url)
+            .embeds(self.embeds)?
+            .tts(self.tts);
+
+        if let thread::Info::Known(Some(thread_id)) = self.thread_info {
+            execute_webhook = execute_webhook.thread_id(thread_id);
+        }
+
+        if let Some(flags) = self.flags {
+            execute_webhook = execute_webhook.flags(flags);
+        }
+
+        Ok(execute_webhook)
     }
 }
