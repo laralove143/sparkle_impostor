@@ -122,6 +122,7 @@ impl<'a> MessageSource<'a> {
                     }
                 )
             },
+            webhook_name: "Message Cloner".to_owned(),
             thread_info: thread::Info::Unknown,
             webhook: None,
             later_messages: Info {

@@ -146,6 +146,8 @@ pub struct MessageSource<'a> {
     pub username: &'a str,
     /// URL of message author's avatar
     pub avatar_url: String,
+    /// Name to be used for the webhook that will be used to create the message
+    pub webhook_name: String,
     /// Info about the message's thread
     pub thread_info: thread::Info,
     /// Webhook ID and token to execute to clone messages with
@@ -159,8 +161,8 @@ pub struct MessageSource<'a> {
 impl<'a> MessageSource<'a> {
     /// Executes a webhook using the given source
     ///
-    /// Creates a webhook called "Message Cloner" if one made by the bot in the
-    /// channel doesn't exist
+    /// If a webhook called the set name or *Message Cloner* in the channel
+    /// doesn't exist, creates it
     ///
     /// Make sure the bot has these required permissions:
     /// - [`Permissions::SEND_TTS_MESSAGES`]
@@ -224,27 +226,40 @@ impl<'a> MessageSource<'a> {
         Ok(self)
     }
 
+    /// Set the name of the webhook to use for creating messages
+    ///
+    /// Defaults to *Message Cloner* if not called
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn webhook_name(mut self, name: String) -> Self {
+        self.webhook_name = name;
+        self
+    }
+
     async fn set_webhook(&mut self) -> Result<(), Error> {
-        if self.webhook.is_none() {
-            let webhook = if let Some(webhook) = self
-                .http
-                .channel_webhooks(self.channel_id)
-                .await?
-                .models()
-                .await?
-                .into_iter()
-                .find(|webhook| webhook.token.is_some())
-            {
-                webhook
-            } else {
-                self.http
-                    .create_webhook(self.channel_id, "Message Cloner")?
-                    .await?
-                    .model()
-                    .await?
-            };
-            self.webhook = Some((webhook.id, webhook.token.unwrap()));
+        if self.webhook.is_some() {
+            return Ok(());
         }
+
+        let webhook = if let Some(webhook) = self
+            .http
+            .channel_webhooks(self.channel_id)
+            .await?
+            .models()
+            .await?
+            .into_iter()
+            .find(|webhook| {
+                webhook.token.is_some() && webhook.name.as_ref() == Some(&self.webhook_name)
+            }) {
+            webhook
+        } else {
+            self.http
+                .create_webhook(self.channel_id, &self.webhook_name)?
+                .await?
+                .model()
+                .await?
+        };
+        self.webhook = Some((webhook.id, webhook.token.unwrap()));
 
         Ok(())
     }
