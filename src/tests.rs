@@ -44,7 +44,7 @@ impl Context {
         };
 
         let guild_id = http
-            .channel(channel_id)
+            .channel(Id::new(903367566175653972))
             .await
             .unwrap()
             .model()

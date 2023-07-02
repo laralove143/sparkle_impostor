@@ -122,7 +122,7 @@ mod thread;
 /// Many of the fields here are stateful, there are no guarantees on the
 /// validity of these since this doesn't have access to the gateway, this means
 /// you should use and drop this struct as fast as you can
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct MessageSource<'a> {
     /// Message's ID
     pub source_id: Id<MessageMarker>,
@@ -148,6 +148,8 @@ pub struct MessageSource<'a> {
     pub thread_info: thread::Info,
     /// Webhook ID and token to execute to clone messages with
     pub webhook: Option<(Id<WebhookMarker>, String)>,
+    /// Messages sent after the source
+    pub later_messages: not_last::Info,
     /// The client to use for requests
     pub http: &'a Client,
 }
@@ -209,6 +211,8 @@ impl<'a> MessageSource<'a> {
         }
 
         execute_webhook.await?;
+
+        self.later_messages.is_source_created = true;
 
         Ok(self)
     }
