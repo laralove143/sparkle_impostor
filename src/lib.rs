@@ -172,7 +172,7 @@ impl<'a> MessageSource<'a> {
     /// not calling them before this may make this method fail
     ///
     /// If the message has a reply, it will be stripped, since webhook messages
-    /// can't have references
+    /// can't have replies
     ///
     /// # Errors
     ///
