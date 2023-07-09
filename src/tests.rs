@@ -17,6 +17,7 @@ mod avatar;
 mod forum;
 mod not_last;
 mod thread;
+mod username;
 
 struct Context {
     http: Client,

@@ -35,12 +35,6 @@ pub enum Error {
     /// over 2000 characters
     #[error("source message's content is invalid")]
     SourceContentInvalid,
-    /// Username of the source message's author is invalid
-    ///
-    /// This happens because usernames or nicks don't have the same requirements
-    /// as webhook usernames
-    #[error("username of the source message's author is invalid")]
-    SourceUsernameInvalid,
     /// Source message is not in last `n` messages
     #[error("source message is not in last {0} messages")]
     SourceNotIn(u16),

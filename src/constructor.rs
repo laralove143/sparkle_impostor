@@ -81,8 +81,6 @@ impl<'a> MessageSource<'a> {
         }
         twilight_validate::message::content(&message.content)
             .map_err(|_| Error::SourceContentInvalid)?;
-        twilight_validate::request::webhook_username(&message.author.name)
-            .map_err(|_| Error::SourceUsernameInvalid)?;
 
         Ok(MessageSource {
             source_id: message.id,
@@ -96,7 +94,8 @@ impl<'a> MessageSource<'a> {
                 .member
                 .as_ref()
                 .and_then(|member| member.nick.as_ref())
-                .unwrap_or(&message.author.name),
+                .unwrap_or(&message.author.name)
+                .clone(),
             avatar_url: if let (Some(guild_id), Some(avatar)) = (
                 message.guild_id,
                 message.member.as_ref().and_then(|member| member.avatar),

@@ -110,6 +110,7 @@ pub mod not_last;
 #[cfg(test)]
 mod tests;
 mod thread;
+mod username;
 
 /// A message that can be cloned
 ///
@@ -143,7 +144,7 @@ pub struct MessageSource<'a> {
     /// If the message is in a thread, this should be the parent thread's ID
     pub channel_id: Id<ChannelMarker>,
     /// Username of the message's author
-    pub username: &'a str,
+    pub username: String,
     /// URL of message author's avatar
     pub avatar_url: String,
     /// Name to be used for the webhook that will be used to create the message
@@ -271,7 +272,7 @@ impl<'a> MessageSource<'a> {
             .http
             .execute_webhook(*webhook_id, webhook_token)
             .content(self.content)?
-            .username(self.username)?
+            .username(&self.username)?
             .avatar_url(&self.avatar_url)
             .embeds(self.embeds)?
             .tts(self.tts);
