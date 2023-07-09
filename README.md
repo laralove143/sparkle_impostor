@@ -20,11 +20,14 @@ Before starting, set these environment variables, you can also put them in a `.e
 - `NOT_LAST_SOURCE_THREAD_ID`: The bot will create a thread and spam to 200 in it the first time the tests are ran, to
   avoid doing this again, set this to the ID of this thread
 
-Required permissions in the given `CHANNEL_ID` and `FORUM_CHANNEL_ID`:
+Required permissions in `CHANNEL_ID` and `FORUM_CHANNEL_ID`:
 
 - `VIEW_CHANNEL`
 - `MANAGE_WEBHOOKS`
 - `SEND_MESSAGES`
+
+Required additional permissions in `FORUM_CHANNEL_ID`:
+
 - `CREATE_POSTS`
 - `SEND_MESSAGES_IN_POSTS`
 
