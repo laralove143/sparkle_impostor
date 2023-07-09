@@ -183,6 +183,9 @@ impl<'a> MessageSource<'a> {
     /// If the message has a reply, it will be stripped, since webhook messages
     /// can't have replies
     ///
+    /// If calling this on the same webhook repeatedly, it's rate-limited on
+    /// every try after the 50th execution in tests
+    ///
     /// # Errors
     ///
     /// Returns [`Error::Http`] if getting, creating or executing the webhook

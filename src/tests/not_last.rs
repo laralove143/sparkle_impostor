@@ -29,7 +29,7 @@ pub(crate) async fn create_source_thread(
         .model()
         .await?;
 
-    for n in 1..=200_u8 {
+    for n in 1..=50_u8 {
         for i in 0..=3_u8 {
             match http
                 .create_message(thread.id)
