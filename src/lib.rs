@@ -91,7 +91,7 @@
 #![allow(clippy::redundant_pub_crate)]
 #![doc = include_str!("../README.md")]
 
-use twilight_http::{request::channel::webhook::ExecuteWebhook, Client};
+use twilight_http::{request::channel::webhook::ExecuteWebhookAndWait, Client};
 #[cfg(doc)]
 use twilight_model::guild::Permissions;
 use twilight_model::{
@@ -268,7 +268,7 @@ impl<'a> MessageSource<'a> {
         Ok(())
     }
 
-    fn webhook_exec(&self) -> Result<ExecuteWebhook<'_>, Error> {
+    fn webhook_exec(&self) -> Result<ExecuteWebhookAndWait<'_>, Error> {
         let (webhook_id, webhook_token) = self.webhook.as_ref().unwrap();
 
         let mut execute_webhook = self
@@ -288,6 +288,7 @@ impl<'a> MessageSource<'a> {
             execute_webhook = execute_webhook.flags(flags);
         }
 
-        Ok(execute_webhook)
+        // not waiting causes race condition issues in the client
+        Ok(execute_webhook.wait())
     }
 }

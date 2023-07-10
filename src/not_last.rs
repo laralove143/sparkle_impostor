@@ -3,6 +3,7 @@
 use twilight_model::channel::Message;
 #[cfg(doc)]
 use twilight_model::guild::Permissions;
+use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
 use crate::{error::Error, MessageSource};
 
@@ -61,11 +62,10 @@ impl<'a> MessageSource<'a> {
     /// This method is potentially very expensive unless
     /// [`MessageSource::check_is_in_last`] was called
     ///
-    /// This must be called after [`MessageSource::create`] to keep the message
-    /// order
-    ///
     /// If the bot doesn't have [`Permissions::READ_MESSAGE_HISTORY`], it'll
     /// always return an empty vector, since that's what Discord responds with
+    ///
+    /// Should not be combined with [`MessageSource::later_messages_batched`]
     ///
     /// # Errors
     ///
@@ -81,18 +81,59 @@ impl<'a> MessageSource<'a> {
     ) -> Result<Vec<Result<MessageSource<'a>, Error>>, Error> {
         self.set_later_messages(None).await?;
 
-        Ok(self
-            .later_messages
-            .messages
-            .iter()
-            .map(|message| {
-                MessageSource::from_message(message, self.http).map(|mut source| {
-                    source.thread_info = self.thread_info;
-                    source.channel_id = self.channel_id;
-                    source
-                })
-            })
-            .collect())
+        Ok(self.later_message_sources())
+    }
+
+    /// Return [`MessageSource`] for messages sent after this after combining
+    /// messages from the same author to the same message
+    ///
+    /// This combines the messages' content separated with a newline, it's
+    /// provided to reduce the number of webhook executions
+    ///
+    /// See [`MessageSource::later_messages`] for more
+    ///
+    /// # Warnings
+    ///
+    /// Should not be combined with [`MessageSource::later_messages`]
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Http`] if getting channel messages fails
+    ///
+    /// Returns [`Error::DeserializeBody`] if deserializing channel messages
+    /// fails
+    pub async fn later_messages_batched(
+        &'a mut self,
+    ) -> Result<Vec<Result<MessageSource<'a>, Error>>, Error> {
+        self.set_later_messages(None).await?;
+
+        // clone to another vec because removing elements from the vec is more expensive
+        let mut messages_batched = vec![];
+
+        for message in self.later_messages.messages.clone() {
+            let Some(last_message) = messages_batched.last_mut() else {
+                messages_batched.push(message);
+                continue;
+            };
+
+            if last_message.author.id == message.author.id
+                // not <= because we push '\n' too
+                && last_message
+                    .content
+                    .chars()
+                    .count()
+                    .saturating_add(message.content.chars().count())
+                    < MESSAGE_CONTENT_LENGTH_MAX
+            {
+                last_message.content.push('\n');
+                last_message.content.push_str(&message.content);
+            } else {
+                messages_batched.push(message);
+            }
+        }
+        self.later_messages.messages = messages_batched;
+
+        Ok(self.later_message_sources())
     }
 
     async fn set_later_messages(&mut self, limit: Option<u16>) -> Result<(), Error> {
@@ -135,5 +176,19 @@ impl<'a> MessageSource<'a> {
                     .rev(),
             );
         }
+    }
+
+    fn later_message_sources(&'a self) -> Vec<Result<MessageSource<'a>, Error>> {
+        self.later_messages
+            .messages
+            .iter()
+            .map(|message| {
+                MessageSource::from_message(message, self.http).map(|mut source| {
+                    source.thread_info = self.thread_info;
+                    source.channel_id = self.channel_id;
+                    source
+                })
+            })
+            .collect()
     }
 }
