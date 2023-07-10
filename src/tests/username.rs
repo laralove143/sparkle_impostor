@@ -1,6 +1,6 @@
 use twilight_validate::request::WEBHOOK_USERNAME_LIMIT_MAX;
 
-use crate::{tests::Context, MessageSource};
+use crate::tests::Context;
 
 #[tokio::test]
 async fn sanitize_too_short() -> Result<(), anyhow::Error> {
@@ -14,7 +14,7 @@ async fn sanitize_too_short() -> Result<(), anyhow::Error> {
         .await?;
     message.author.name = "a".to_owned();
 
-    MessageSource::from_message(&message, &ctx.http)?
+    ctx.message_source(&message)?
         .sanitize_username("a", "")
         .create()
         .await?;
@@ -37,7 +37,7 @@ async fn sanitize_too_long() -> Result<(), anyhow::Error> {
         .await?;
     message.author.name = "a".repeat(WEBHOOK_USERNAME_LIMIT_MAX + 1);
 
-    MessageSource::from_message(&message, &ctx.http)?
+    ctx.message_source(&message)?
         .sanitize_username("", "")
         .create()
         .await?;
@@ -57,7 +57,7 @@ async fn sanitize_substring() -> Result<(), anyhow::Error> {
         .await?;
     message.author.name = "clyde".to_owned();
 
-    MessageSource::from_message(&message, &ctx.http)?
+    ctx.message_source(&message)?
         .sanitize_username("", "aa")
         .create()
         .await?;

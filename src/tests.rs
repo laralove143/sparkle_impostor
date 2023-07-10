@@ -99,6 +99,13 @@ impl Context {
         self.http.create_message(self.channel_id)
     }
 
+    fn message_source<'a>(
+        &'a self,
+        message: &'a Message,
+    ) -> Result<MessageSource<'a>, anyhow::Error> {
+        Ok(MessageSource::from_message(message, &self.http)?)
+    }
+
     async fn clone_message(&self, message: &Message) -> Result<(), Error> {
         MessageSource::from_message(message, &self.http)?
             .create()
@@ -112,14 +119,14 @@ impl Context {
 async fn basic() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
-        .create_message()
-        .content("basic")?
-        .await?
-        .model()
-        .await?;
-
-    ctx.clone_message(&message).await?;
+    ctx.clone_message(
+        &ctx.create_message()
+            .content("basic")?
+            .await?
+            .model()
+            .await?,
+    )
+    .await?;
 
     Ok(())
 }

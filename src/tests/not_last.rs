@@ -5,7 +5,7 @@ use twilight_model::{
 };
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
-use crate::{error::Error, tests::Context, MessageSource};
+use crate::{error::Error, tests::Context};
 
 pub(crate) async fn create_source_thread(
     http: &Client,
@@ -74,9 +74,7 @@ async fn check_err() -> Result<(), anyhow::Error> {
     ctx.create_message().content("1")?.await?;
     ctx.create_message().content("2")?.await?;
 
-    let res = MessageSource::from_message(&message, &ctx.http)?
-        .check_is_in_last(2)
-        .await;
+    let res = ctx.message_source(&message)?.check_is_in_last(2).await;
     assert!(matches!(res, Err(Error::SourceNotIn(2))));
 
     Ok(())
@@ -96,9 +94,7 @@ async fn check_ok() -> Result<(), anyhow::Error> {
     ctx.create_message().content("1")?.await?;
     ctx.create_message().content("2")?.await?;
 
-    MessageSource::from_message(&message, &ctx.http)?
-        .check_is_in_last(3)
-        .await?;
+    ctx.message_source(&message)?.check_is_in_last(3).await?;
 
     Ok(())
 }
@@ -133,9 +129,7 @@ async fn create_later() -> Result<(), anyhow::Error> {
         }
     }
 
-    let message = messages.last_mut().unwrap();
-
-    let mut message_source = MessageSource::from_message(message, &ctx.http)?;
+    let mut message_source = ctx.message_source(messages.last().unwrap())?;
     message_source.channel_id = ctx
         .http
         .create_thread(
@@ -181,9 +175,8 @@ async fn batched() -> Result<(), anyhow::Error> {
     messages.get_mut(2).unwrap().author.id = Id::new(1);
 
     let first_message = messages.remove(0);
-    let mut message_source = MessageSource::from_message(&first_message, &ctx.http)?
-        .create()
-        .await?;
+    let mut message_source = ctx.message_source(&first_message)?.create().await?;
+
     message_source.later_messages.messages = messages;
     message_source.later_messages.is_complete = true;
     message_source.later_messages.is_source_created = true;
@@ -208,6 +201,7 @@ async fn batched_content_too_long() -> Result<(), anyhow::Error> {
         .await?
         .model()
         .await?;
+
     for _ in 0_usize..2 {
         ctx.create_message()
             .content(&"a".repeat(MESSAGE_CONTENT_LENGTH_MAX.div_euclid(2)))?
@@ -216,9 +210,7 @@ async fn batched_content_too_long() -> Result<(), anyhow::Error> {
             .await?;
     }
 
-    let mut message_source = MessageSource::from_message(&message, &ctx.http)?
-        .create()
-        .await?;
+    let mut message_source = ctx.message_source(&message)?.create().await?;
 
     let later_messages = message_source.later_messages_batched().await?;
 
@@ -240,6 +232,7 @@ async fn batched_content_not_too_long() -> Result<(), anyhow::Error> {
         .await?
         .model()
         .await?;
+
     for i in 0_usize..2 {
         ctx.create_message()
             .content(&"a".repeat(MESSAGE_CONTENT_LENGTH_MAX.div_euclid(2) - i))?
@@ -248,9 +241,7 @@ async fn batched_content_not_too_long() -> Result<(), anyhow::Error> {
             .await?;
     }
 
-    let mut message_source = MessageSource::from_message(&message, &ctx.http)?
-        .create()
-        .await?;
+    let mut message_source = ctx.message_source(&message)?.create().await?;
 
     let later_messages = message_source.later_messages_batched().await?;
 

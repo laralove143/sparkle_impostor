@@ -1,6 +1,6 @@
 use twilight_model::channel::ChannelType;
 
-use crate::{error::Error, tests::Context, MessageSource};
+use crate::{error::Error, tests::Context};
 
 #[tokio::test]
 async fn thread() -> Result<(), anyhow::Error> {
@@ -17,19 +17,18 @@ async fn thread() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    let message = ctx
-        .http
-        .create_message(thread.id)
-        .content("thread")?
-        .await?
-        .model()
-        .await?;
-
-    MessageSource::from_message(&message, &ctx.http)?
-        .handle_thread()
-        .await?
-        .create()
-        .await?;
+    ctx.message_source(
+        &ctx.http
+            .create_message(thread.id)
+            .content("thread")?
+            .await?
+            .model()
+            .await?,
+    )?
+    .handle_thread()
+    .await?
+    .create()
+    .await?;
 
     Ok(())
 }
@@ -38,27 +37,27 @@ async fn thread() -> Result<(), anyhow::Error> {
 async fn ignore_in_thread() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let thread = ctx
-        .http
-        .create_thread(
-            ctx.channel_id,
-            "sparkle impostor thread ignore",
-            ChannelType::PublicThread,
-        )?
-        .await?
-        .model()
-        .await?;
-
-    let message = ctx
-        .http
-        .create_message(thread.id)
-        .content("thread ignore message in thread *(should not be cloned)*")?
-        .await?
-        .model()
-        .await?;
-
     assert!(matches!(
-        ctx.clone_message(&message).await,
+        ctx.clone_message(
+            &ctx.http
+                .create_message(
+                    ctx.http
+                        .create_thread(
+                            ctx.channel_id,
+                            "sparkle impostor thread ignore",
+                            ChannelType::PublicThread,
+                        )?
+                        .await?
+                        .model()
+                        .await?
+                        .id
+                )
+                .content("thread ignore message in thread *(should not be cloned)*")?
+                .await?
+                .model()
+                .await?
+        )
+        .await,
         Err(Error::Http(_))
     ));
 
@@ -69,14 +68,14 @@ async fn ignore_in_thread() -> Result<(), anyhow::Error> {
 async fn ignore_not_in_thread() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
-        .create_message()
-        .content("thread ignore not in thread *(should be cloned as normal)*")?
-        .await?
-        .model()
-        .await?;
-
-    ctx.clone_message(&message).await?;
+    ctx.clone_message(
+        &ctx.create_message()
+            .content("thread ignore not in thread *(should be cloned as normal)*")?
+            .await?
+            .model()
+            .await?,
+    )
+    .await?;
 
     Ok(())
 }

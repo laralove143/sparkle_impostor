@@ -1,20 +1,21 @@
-use crate::{error::Error, tests::Context, MessageSource};
+use crate::{error::Error, tests::Context};
 
 #[tokio::test]
 async fn create() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let thread = ctx
-        .http
-        .create_forum_thread(ctx.forum_channel_id, "sparkle impostor forum thread")
-        .message()
-        .content("forum first message *(should not be cloned)*")?
-        .await?
-        .model()
-        .await?;
-
     assert!(matches!(
-        ctx.clone_message(&thread.message).await,
+        ctx.clone_message(
+            &ctx.http
+                .create_forum_thread(ctx.forum_channel_id, "sparkle impostor forum thread")
+                .message()
+                .content("forum first message *(should not be cloned)*")?
+                .await?
+                .model()
+                .await?
+                .message
+        )
+        .await,
         Err(Error::SourceThread)
     ));
 
@@ -42,7 +43,7 @@ async fn message() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    MessageSource::from_message(&message, &ctx.http)?
+    ctx.message_source(&message)?
         .handle_thread()
         .await?
         .create()
