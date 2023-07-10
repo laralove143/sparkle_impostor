@@ -41,9 +41,6 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::SourceContentInvalid`] if the message's content is
     /// invalid
-    ///
-    /// Returns [`Error::SourceUsernameInvalid`] if username of the message's
-    /// author is invalid
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
