@@ -27,9 +27,6 @@ pub enum Error {
     #[error("source message is a system message")]
     SourceSystem,
     /// Source message's content is invalid
-    ///
-    /// This happens when the author has used Nitro perks to send a message with
-    /// over 2000 characters
     #[error("source message's content is invalid")]
     SourceContentInvalid,
     /// Source message has an attachment

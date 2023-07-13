@@ -37,7 +37,8 @@ impl<'a> MessageSource<'a> {
     /// correctly
     ///
     /// Returns [`Error::SourceContentInvalid`] if the message's content is
-    /// invalid
+    /// invalid, this may happen when the author has used Nitro perks to send a
+    /// message with over 2000 characters
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
