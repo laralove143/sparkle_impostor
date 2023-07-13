@@ -18,6 +18,7 @@ mod forum;
 mod not_last;
 mod thread;
 mod username;
+mod attachment;
 
 struct Context {
     http: Client,

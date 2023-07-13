@@ -104,6 +104,7 @@ use twilight_model::{
 
 use crate::error::Error;
 
+mod attachment;
 mod constructor;
 pub mod error;
 pub mod not_last;
@@ -132,7 +133,7 @@ pub struct MessageSource<'a> {
     /// ID of the channel the source message is in
     pub source_channel_id: Id<ChannelMarker>,
     /// Content of the message
-    pub content: &'a str,
+    pub content: String,
     /// Embeds in the message
     pub embeds: &'a [Embed],
     /// Whether the message has text-to-speech enabled
@@ -149,6 +150,8 @@ pub struct MessageSource<'a> {
     pub avatar_url: String,
     /// Name to be used for the webhook that will be used to create the message
     pub webhook_name: String,
+    /// Info about the message's attachments
+    pub attachment_info: attachment::Info<'a>,
     /// Info about the message's thread
     pub thread_info: thread::Info,
     /// Webhook ID and token to execute to clone messages with
@@ -274,7 +277,7 @@ impl<'a> MessageSource<'a> {
         let mut execute_webhook = self
             .http
             .execute_webhook(*webhook_id, webhook_token)
-            .content(self.content)?
+            .content(&self.content)?
             .username(&self.username)?
             .avatar_url(&self.avatar_url)
             .embeds(self.embeds)?
@@ -286,6 +289,12 @@ impl<'a> MessageSource<'a> {
 
         if let Some(flags) = self.flags {
             execute_webhook = execute_webhook.flags(flags);
+        }
+
+        #[cfg(feature = "upload")]
+        {
+            execute_webhook =
+                execute_webhook.attachments(&self.attachment_info.attachments_upload)?;
         }
 
         // not waiting causes race condition issues in the client

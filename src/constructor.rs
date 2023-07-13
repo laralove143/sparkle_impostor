@@ -4,7 +4,7 @@ use twilight_model::channel::{
     Message,
 };
 
-use crate::{error::Error, not_last::Info, thread, MessageSource};
+use crate::{attachment, error::Error, not_last, thread, MessageSource};
 
 impl<'a> MessageSource<'a> {
     /// Create [`MessageSource`] from a [`Message`]
@@ -13,9 +13,6 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::SourceRichPresence`] if the message is related
     /// to rich presence, which can't be recreated by bots
-    ///
-    /// Returns [`Error::SourceAttachment`] if the message has an attachment,
-    /// this will be handled more gracefully in the future
     ///
     /// Returns [`Error::SourceComponent`] if the message has a component, which
     /// would be broken since the components would then be sent to the cloner
@@ -44,9 +41,6 @@ impl<'a> MessageSource<'a> {
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
-        }
-        if !message.attachments.is_empty() {
-            return Err(Error::SourceAttachment);
         }
         if !message.components.is_empty() {
             return Err(Error::SourceComponent);
@@ -82,7 +76,7 @@ impl<'a> MessageSource<'a> {
         Ok(MessageSource {
             source_id: message.id,
             source_channel_id: message.channel_id,
-            content: &message.content,
+            content: message.content.clone(),
             embeds: &message.embeds,
             tts: message.tts,
             flags: message.flags,
@@ -119,9 +113,14 @@ impl<'a> MessageSource<'a> {
                 )
             },
             webhook_name: "Message Cloner".to_owned(),
+            attachment_info: attachment::Info {
+                attachments: &message.attachments,
+                #[cfg(feature = "upload")]
+                attachments_upload: vec![],
+            },
             thread_info: thread::Info::Unknown,
             webhook: None,
-            later_messages: Info {
+            later_messages: not_last::Info {
                 messages: vec![],
                 is_complete: false,
                 is_source_created: false,

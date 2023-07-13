@@ -7,6 +7,10 @@ existing message
 
 My bots use it, it's open source because why not
 
+## 📦 Cargo Features
+
+- `upload`: Enables methods for re-uploading attachments
+
 ## 🧪 Testing
 
 The crate uses integration tests as opposed to unit tests to test real-world usage. It creates a message and clones it,

@@ -8,9 +8,6 @@ pub enum Error {
     /// Source message is related to rich presence
     #[error("source message is related to rich presence")]
     SourceRichPresence,
-    /// Source message has an attachment
-    #[error("source message has an attachment")]
-    SourceAttachment,
     /// Source message has a component
     #[error("source message has a component")]
     SourceComponent,
@@ -35,6 +32,9 @@ pub enum Error {
     /// over 2000 characters
     #[error("source message's content is invalid")]
     SourceContentInvalid,
+    /// Source message has an attachment
+    #[error("source message has an attachment")]
+    SourceAttachment,
     /// Source message is not in last `n` messages
     #[error("source message is not in last {0} messages")]
     SourceNotIn(u16),
@@ -50,4 +50,15 @@ pub enum Error {
     /// A message validation error was returned
     #[error("{0}")]
     MessageValidation(#[from] MessageValidationError),
+    /// Source message's attachments are too large
+    ///
+    /// This happens when the author has used Nitro perks to send a message with
+    /// over 25 MB of attachments
+    #[cfg(feature = "upload")]
+    #[error("source message's attachments are too large")]
+    SourceAttachmentTooLarge,
+    /// A reqwest error was returned
+    #[cfg(feature = "upload")]
+    #[error("{0}")]
+    Reqwest(#[from] reqwest::Error),
 }
