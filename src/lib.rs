@@ -108,6 +108,7 @@ mod attachment;
 mod constructor;
 pub mod error;
 pub mod not_last;
+mod sticker;
 #[cfg(test)]
 mod tests;
 mod thread;
@@ -150,14 +151,16 @@ pub struct MessageSource<'a> {
     pub avatar_url: String,
     /// Name to be used for the webhook that will be used to create the message
     pub webhook_name: String,
+    /// Info about the message's stickers
+    pub sticker_info: sticker::Info,
     /// Info about the message's attachments
     pub attachment_info: attachment::Info<'a>,
     /// Info about the message's thread
     pub thread_info: thread::Info,
-    /// Webhook ID and token to execute to clone messages with
-    pub webhook: Option<(Id<WebhookMarker>, String)>,
     /// Messages sent after the source
     pub later_messages: not_last::Info,
+    /// Webhook ID and token to execute to clone messages with
+    pub webhook: Option<(Id<WebhookMarker>, String)>,
     /// The client to use for requests
     pub http: &'a Client,
 }

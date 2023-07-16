@@ -4,7 +4,7 @@ use twilight_model::channel::{
     Message,
 };
 
-use crate::{attachment, error::Error, not_last, thread, MessageSource};
+use crate::{attachment, error::Error, not_last, sticker, thread, MessageSource};
 
 impl<'a> MessageSource<'a> {
     /// Create [`MessageSource`] from a [`Message`]
@@ -20,9 +20,6 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::SourceReaction`] if the message has a reaction, this
     /// will be handled more gracefully in the future
-    ///
-    /// Returns [`Error::SourceSticker`] if the message has a sticker, which
-    /// webhook messages can't have
     ///
     /// Returns [`Error::SourceThread`] if the message has a thread or forum
     /// post created from it, this will be handled more gracefully in the
@@ -48,9 +45,6 @@ impl<'a> MessageSource<'a> {
         }
         if !message.reactions.is_empty() {
             return Err(Error::SourceReaction);
-        }
-        if !message.sticker_items.is_empty() {
-            return Err(Error::SourceSticker);
         }
         if message.thread.is_some()
             || message.id == message.channel_id.cast()
@@ -114,6 +108,9 @@ impl<'a> MessageSource<'a> {
                 )
             },
             webhook_name: "Message Cloner".to_owned(),
+            sticker_info: sticker::Info {
+                exists: !message.sticker_items.is_empty(),
+            },
             attachment_info: attachment::Info {
                 attachments: &message.attachments,
                 #[cfg(feature = "upload")]

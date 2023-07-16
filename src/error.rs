@@ -14,9 +14,6 @@ pub enum Error {
     /// Source message has a reaction
     #[error("source message has a reaction")]
     SourceReaction,
-    /// Source message has a sticker
-    #[error("source message has a sticker")]
-    SourceSticker,
     /// Source message has a thread created from it
     #[error("source message has a thread created from it")]
     SourceThread,
@@ -29,6 +26,9 @@ pub enum Error {
     /// Source message's content is invalid
     #[error("source message's content is invalid")]
     SourceContentInvalid,
+    /// Source message has a sticker
+    #[error("source message has a sticker")]
+    SourceSticker,
     /// Source message has an attachment
     #[error("source message has an attachment")]
     SourceAttachment,
