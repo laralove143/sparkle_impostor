@@ -111,6 +111,7 @@ use twilight_model::{
 use crate::error::Error;
 
 pub mod attachment;
+pub mod component;
 mod constructor;
 pub mod error;
 pub mod not_last;
@@ -159,6 +160,8 @@ pub struct MessageSource<'a> {
     pub sticker_info: sticker::Info,
     /// Info about the message's attachments
     pub attachment_info: attachment::Info<'a>,
+    /// Info about the message's components
+    pub component_info: component::Info,
     /// Info about the message's thread
     pub thread_info: thread::Info,
     /// Messages sent after the source
@@ -285,9 +288,10 @@ impl<'a> MessageSource<'a> {
             .http
             .execute_webhook(*webhook_id, webhook_token)
             .content(&self.content)?
+            .embeds(self.embeds)?
+            .components(&self.component_info.url_components)?
             .username(&self.username)?
             .avatar_url(&self.avatar_url)
-            .embeds(self.embeds)?
             .tts(self.tts);
 
         if let thread::Info::Known(Some(thread_id)) = self.thread_info {

@@ -79,6 +79,7 @@ impl Context {
         })
     }
 
+    #[allow(dead_code)]
     pub const fn create_message(&self) -> CreateMessage<'_> {
         self.http.create_message(self.channel_id)
     }
@@ -91,6 +92,7 @@ impl Context {
         Ok(MessageSource::from_message(message, &self.http)?)
     }
 
+    #[allow(dead_code)]
     pub async fn clone_message(&self, message: &Message) -> Result<(), Error> {
         MessageSource::from_message(message, &self.http)?
             .create()
@@ -168,7 +170,12 @@ fn _source_construct() {
         sticker_info: sparkle_impostor::sticker::Info { exists: false },
         attachment_info: sparkle_impostor::attachment::Info {
             attachments: &[],
+            #[cfg(feature = "upload")]
             attachments_upload: vec![],
+        },
+        component_info: sparkle_impostor::component::Info {
+            url_components: vec![],
+            has_invalid_components: false,
         },
         thread_info: sparkle_impostor::thread::Info::Unknown,
         later_messages: sparkle_impostor::not_last::Info {

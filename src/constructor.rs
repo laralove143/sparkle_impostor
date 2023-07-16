@@ -4,7 +4,7 @@ use twilight_model::channel::{
     Message,
 };
 
-use crate::{attachment, error::Error, not_last, sticker, thread, MessageSource};
+use crate::{attachment, component, error::Error, not_last, sticker, thread, MessageSource};
 
 impl<'a> MessageSource<'a> {
     /// Create [`MessageSource`] from a [`Message`]
@@ -13,10 +13,6 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::SourceRichPresence`] if the message is related
     /// to rich presence, which can't be recreated by bots
-    ///
-    /// Returns [`Error::SourceComponent`] if the message has a component, which
-    /// would be broken since the components would then be sent to the cloner
-    /// bot
     ///
     /// Returns [`Error::SourceReaction`] if the message has a reaction, this
     /// will be handled more gracefully in the future
@@ -39,9 +35,6 @@ impl<'a> MessageSource<'a> {
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
-        }
-        if !message.components.is_empty() {
-            return Err(Error::SourceComponent);
         }
         if !message.reactions.is_empty() {
             return Err(Error::SourceReaction);
@@ -67,6 +60,9 @@ impl<'a> MessageSource<'a> {
         }
         twilight_validate::message::content(&message.content)
             .map_err(|_| Error::SourceContentInvalid)?;
+
+        let url_components = component::filter_valid(&message.components);
+        let has_invalid_components = message.components != url_components;
 
         Ok(MessageSource {
             source_id: message.id,
@@ -115,6 +111,10 @@ impl<'a> MessageSource<'a> {
                 attachments: &message.attachments,
                 #[cfg(feature = "upload")]
                 attachments_upload: vec![],
+            },
+            component_info: component::Info {
+                url_components,
+                has_invalid_components,
             },
             thread_info: thread::Info::Unknown,
             webhook: None,

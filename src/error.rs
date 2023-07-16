@@ -8,9 +8,6 @@ pub enum Error {
     /// Source message is related to rich presence
     #[error("source message is related to rich presence")]
     SourceRichPresence,
-    /// Source message has a component
-    #[error("source message has a component")]
-    SourceComponent,
     /// Source message has a reaction
     #[error("source message has a reaction")]
     SourceReaction,
@@ -23,15 +20,18 @@ pub enum Error {
     /// Source message is a system message
     #[error("source message is a system message")]
     SourceSystem,
-    /// Source message's content is invalid
-    #[error("source message's content is invalid")]
-    SourceContentInvalid,
+    /// Source message has a non-URL component
+    #[error("source message has a non-URL component")]
+    SourceComponent,
     /// Source message has a sticker
     #[error("source message has a sticker")]
     SourceSticker,
     /// Source message has an attachment
     #[error("source message has an attachment")]
     SourceAttachment,
+    /// Source message's content is invalid
+    #[error("source message's content is invalid")]
+    SourceContentInvalid,
     /// Source message is not in last `n` messages
     #[error("source message is not in last {0} messages")]
     SourceNotIn(u16),
