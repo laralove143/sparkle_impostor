@@ -1,3 +1,5 @@
+//! Handling the message to clone being in a thread
+
 use twilight_model::id::{marker::ChannelMarker, Id};
 
 use crate::{error::Error, MessageSource};

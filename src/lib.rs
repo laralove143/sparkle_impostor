@@ -91,6 +91,12 @@
 #![allow(clippy::redundant_pub_crate)]
 #![doc = include_str!("../README.md")]
 
+#[cfg(test)]
+use anyhow as _;
+#[cfg(test)]
+use dotenvy as _;
+#[cfg(test)]
+use tokio as _;
 use twilight_http::{request::channel::webhook::ExecuteWebhookAndWait, Client};
 #[cfg(doc)]
 use twilight_model::guild::Permissions;
@@ -104,14 +110,12 @@ use twilight_model::{
 
 use crate::error::Error;
 
-mod attachment;
+pub mod attachment;
 mod constructor;
 pub mod error;
 pub mod not_last;
-mod sticker;
-#[cfg(test)]
-mod tests;
-mod thread;
+pub mod sticker;
+pub mod thread;
 mod username;
 
 /// A message that can be cloned

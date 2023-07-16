@@ -117,13 +117,13 @@ impl<'a> MessageSource<'a> {
             };
 
             if last_message.author.id == message.author.id
-                // not <= because we push '\n' too
                 && last_message
                     .content
                     .chars()
                     .count()
                     .saturating_add(message.content.chars().count())
                     < MESSAGE_CONTENT_LENGTH_MAX
+            // not <= because we push '\n' too
             {
                 last_message.content.push('\n');
                 last_message.content.push_str(&message.content);

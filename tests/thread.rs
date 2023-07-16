@@ -1,6 +1,8 @@
+use common::Context;
+use sparkle_impostor::error::Error;
 use twilight_model::channel::ChannelType;
 
-use crate::{error::Error, tests::Context};
+mod common;
 
 #[tokio::test]
 async fn thread() -> Result<(), anyhow::Error> {

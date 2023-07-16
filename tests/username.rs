@@ -1,6 +1,7 @@
+use common::Context;
 use twilight_validate::request::WEBHOOK_USERNAME_LIMIT_MAX;
 
-use crate::tests::Context;
+mod common;
 
 #[tokio::test]
 async fn sanitize_too_short() -> Result<(), anyhow::Error> {

@@ -1,6 +1,7 @@
+use common::Context;
 use twilight_model::guild::{MemberFlags, PartialMember};
 
-use crate::tests::Context;
+mod common;
 
 #[tokio::test]
 async fn default() -> Result<(), anyhow::Error> {

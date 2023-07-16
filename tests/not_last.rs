@@ -1,64 +1,12 @@
-use twilight_http::{api_error::ApiError, Client};
+use common::Context;
+use sparkle_impostor::error::Error;
 use twilight_model::{
     channel::{ChannelType, Message},
-    id::{marker::ChannelMarker, Id},
+    id::Id,
 };
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
-use crate::{error::Error, tests::Context};
-
-pub(crate) async fn create_source_thread(
-    http: &Client,
-    channel_id: Id<ChannelMarker>,
-) -> Result<Id<ChannelMarker>, anyhow::Error> {
-    let thread = http
-        .create_thread(
-            channel_id,
-            "sparkle impostor create later messages source",
-            ChannelType::PublicThread,
-        )?
-        .await?
-        .model()
-        .await?;
-
-    http.create_message(thread.id)
-        .content(
-            "create later messages *(this and messages below should be cloned to another thread \
-             in order)*",
-        )?
-        .await?
-        .model()
-        .await?;
-
-    for n in 1..=50_u8 {
-        for i in 0..=3_u8 {
-            match http
-                .create_message(thread.id)
-                .content(&n.to_string())?
-                .await
-            {
-                Ok(_) => break,
-                Err(err)
-                    if matches!(
-                        err.kind(),
-                        twilight_http::error::ErrorType::Response {
-                            error: ApiError::Ratelimited(_),
-                            ..
-                        }
-                    ) =>
-                {
-                    if i == 3 {
-                        return Err(err.into());
-                    }
-                    continue;
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-    }
-
-    Ok(thread.id)
-}
+mod common;
 
 #[tokio::test]
 async fn check_err() -> Result<(), anyhow::Error> {

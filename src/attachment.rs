@@ -1,3 +1,5 @@
+//! Handling the message to clone having attachments
+
 #[cfg(feature = "reqwest")]
 use reqwest::Client;
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
@@ -42,15 +44,21 @@ impl MessageSource<'_> {
     /// Returns [`Error::SourceContentInvalid`] if the message content becomes
     /// too long after adding the links
     pub fn handle_attachment_link(mut self) -> Result<Self, Error> {
-        if self.content.chars().count().saturating_add(
-            self.attachment_info
-                .attachments
-                .iter()
-                // add 1 for newlines
-                .map(|attachment| attachment.url.chars().count().saturating_add(1))
-                .reduce(usize::saturating_add)
-                .unwrap_or(0),
-        ).saturating_add(1) // add 1 for empty line between
+        if self
+            .content
+            .chars()
+            .count()
+            .saturating_add(
+                self.attachment_info
+                    .attachments
+                    .iter()
+                    // add 1 for newlines
+                    .map(|attachment| attachment.url.chars().count().saturating_add(1))
+                    .reduce(usize::saturating_add)
+                    .unwrap_or(0),
+            )
+            // add 1 for empty line between
+            .saturating_add(1)
             > MESSAGE_CONTENT_LENGTH_MAX
         {
             return Err(Error::SourceContentInvalid);

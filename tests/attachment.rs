@@ -1,7 +1,9 @@
+use common::Context;
+use sparkle_impostor::error::Error;
 use twilight_model::http::attachment::Attachment;
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
-use crate::{error::Error, tests::Context};
+mod common;
 
 #[tokio::test]
 async fn link() -> Result<(), anyhow::Error> {

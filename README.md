@@ -35,4 +35,4 @@ Required additional permissions in `FORUM_CHANNEL_ID`:
 - `CREATE_POSTS`
 - `SEND_MESSAGES_IN_POSTS`
 
-Test with a single thread to avoid race conditions: `cargo test -- --test-threads=1`
+Test with a single thread to avoid race conditions: `cargo test --all-features -- --test-threads=1`

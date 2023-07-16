@@ -1,7 +1,11 @@
+//! Handling the message having stickers
+
 use crate::{error::Error, MessageSource};
 
+/// Info about the message's stickers
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Info {
+    /// Whether the message has any stickers
     pub exists: bool,
 }
 
