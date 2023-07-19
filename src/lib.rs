@@ -115,7 +115,7 @@ pub mod component;
 mod constructor;
 mod delete;
 pub mod error;
-pub mod not_last;
+pub mod later_messages;
 pub mod sticker;
 pub mod thread;
 mod username;
@@ -166,7 +166,7 @@ pub struct MessageSource<'a> {
     /// Info about the message's thread
     pub thread_info: thread::Info,
     /// Messages sent after the source
-    pub later_messages: not_last::Info,
+    pub later_messages: later_messages::Info,
     /// Webhook ID and token to execute to clone messages with
     pub webhook: Option<(Id<WebhookMarker>, String)>,
     /// The client to use for requests

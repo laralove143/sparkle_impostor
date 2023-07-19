@@ -4,7 +4,7 @@ use twilight_model::channel::{
     Message,
 };
 
-use crate::{attachment, component, error::Error, not_last, sticker, thread, MessageSource};
+use crate::{attachment, component, error::Error, later_messages, sticker, thread, MessageSource};
 
 impl<'a> MessageSource<'a> {
     /// Create [`MessageSource`] from a [`Message`]
@@ -118,7 +118,7 @@ impl<'a> MessageSource<'a> {
             },
             thread_info: thread::Info::Unknown,
             webhook: None,
-            later_messages: not_last::Info {
+            later_messages: later_messages::Info {
                 messages: vec![],
                 is_complete: false,
                 is_source_created: false,

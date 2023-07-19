@@ -178,7 +178,7 @@ fn _source_construct() {
             has_invalid_components: false,
         },
         thread_info: sparkle_impostor::thread::Info::Unknown,
-        later_messages: sparkle_impostor::not_last::Info {
+        later_messages: sparkle_impostor::later_messages::Info {
             messages: vec![],
             is_complete: false,
             is_source_created: false,
