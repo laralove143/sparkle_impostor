@@ -122,6 +122,7 @@ impl<'a> MessageSource<'a> {
                 messages: vec![],
                 is_complete: false,
                 is_source_created: false,
+                is_later_message_sources_created: false,
             },
             http,
         })

@@ -113,6 +113,7 @@ use crate::error::Error;
 pub mod attachment;
 pub mod component;
 mod constructor;
+mod delete;
 pub mod error;
 pub mod not_last;
 pub mod sticker;

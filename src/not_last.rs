@@ -14,10 +14,13 @@ pub struct Info {
     ///
     /// Has to be an owned value because some methods set it from owned values
     pub messages: Vec<Message>,
-    /// Whether there's no more messages
+    /// Whether there are no more messages
     pub is_complete: bool,
     /// Whether [`MessageSource::create`] was called
     pub is_source_created: bool,
+    /// Whether [`MessageSource::later_messages`] or
+    /// [`MessageSource::later_messages_batched`] was called
+    pub is_later_message_sources_created: bool,
 }
 
 impl<'a> MessageSource<'a> {
@@ -76,9 +79,7 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::DeserializeBody`] if deserializing channel messages
     /// fails
-    pub async fn later_messages(
-        &'a mut self,
-    ) -> Result<Vec<Result<MessageSource<'a>, Error>>, Error> {
+    pub async fn later_messages(&mut self) -> Result<Vec<Result<MessageSource<'_>, Error>>, Error> {
         self.set_later_messages(None).await?;
 
         Ok(self.later_message_sources())
@@ -103,8 +104,8 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::DeserializeBody`] if deserializing channel messages
     /// fails
     pub async fn later_messages_batched(
-        &'a mut self,
-    ) -> Result<Vec<Result<MessageSource<'a>, Error>>, Error> {
+        &mut self,
+    ) -> Result<Vec<Result<MessageSource<'_>, Error>>, Error> {
         self.set_later_messages(None).await?;
 
         // clone to another vec because removing elements from the vec is more expensive
@@ -178,7 +179,9 @@ impl<'a> MessageSource<'a> {
         }
     }
 
-    fn later_message_sources(&'a self) -> Vec<Result<MessageSource<'a>, Error>> {
+    fn later_message_sources(&mut self) -> Vec<Result<MessageSource<'_>, Error>> {
+        self.later_messages.is_later_message_sources_created = true;
+
         self.later_messages
             .messages
             .iter()
