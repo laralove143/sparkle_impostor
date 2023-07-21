@@ -12,7 +12,7 @@ mod common;
 async fn check_err() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("check is in last err *(nothing should be cloned)*")?
         .await?
@@ -22,8 +22,10 @@ async fn check_err() -> Result<(), anyhow::Error> {
     ctx.create_message().content("1")?.await?;
     ctx.create_message().content("2")?.await?;
 
-    let res = ctx.message_source(&message)?.check_is_in_last(2).await;
-    assert!(matches!(res, Err(Error::SourceNotIn(2))));
+    assert!(matches!(
+        ctx.message_source(&mut message)?.check_is_in_last(2).await,
+        Err(Error::SourceNotIn(2))
+    ));
 
     Ok(())
 }
@@ -32,7 +34,7 @@ async fn check_err() -> Result<(), anyhow::Error> {
 async fn check_ok() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("check is in ok *(nothing should be cloned)*")?
         .await?
@@ -42,7 +44,9 @@ async fn check_ok() -> Result<(), anyhow::Error> {
     ctx.create_message().content("1")?.await?;
     ctx.create_message().content("2")?.await?;
 
-    ctx.message_source(&message)?.check_is_in_last(3).await?;
+    ctx.message_source(&mut message)?
+        .check_is_in_last(3)
+        .await?;
 
     Ok(())
 }
@@ -77,7 +81,7 @@ async fn create_later() -> Result<(), anyhow::Error> {
         }
     }
 
-    let mut message_source = ctx.message_source(messages.last().unwrap())?;
+    let mut message_source = ctx.message_source(messages.last_mut().unwrap())?;
     message_source.channel_id = ctx
         .http
         .create_thread(
@@ -122,8 +126,8 @@ async fn batched() -> Result<(), anyhow::Error> {
     messages.get_mut(1).unwrap().author.id = Id::new(1);
     messages.get_mut(2).unwrap().author.id = Id::new(1);
 
-    let first_message = messages.remove(0);
-    let mut message_source = ctx.message_source(&first_message)?.create().await?;
+    let mut first_message = messages.remove(0);
+    let mut message_source = ctx.message_source(&mut first_message)?.create().await?;
 
     message_source.later_messages.messages = messages;
     message_source.later_messages.is_complete = true;
@@ -143,7 +147,7 @@ async fn batched() -> Result<(), anyhow::Error> {
 async fn batched_content_too_long() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("batched messages content too long *(each message should be cloned separately)*")?
         .await?
@@ -158,7 +162,7 @@ async fn batched_content_too_long() -> Result<(), anyhow::Error> {
             .await?;
     }
 
-    let mut message_source = ctx.message_source(&message)?.create().await?;
+    let mut message_source = ctx.message_source(&mut message)?.create().await?;
 
     let later_messages = message_source.later_messages_batched().await?;
 
@@ -174,7 +178,7 @@ async fn batched_content_too_long() -> Result<(), anyhow::Error> {
 async fn batched_content_not_too_long() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("batched messages content not too long *(last two messages should be combined)*")?
         .await?
@@ -189,7 +193,7 @@ async fn batched_content_not_too_long() -> Result<(), anyhow::Error> {
             .await?;
     }
 
-    let mut message_source = ctx.message_source(&message)?.create().await?;
+    let mut message_source = ctx.message_source(&mut message)?.create().await?;
 
     let later_messages = message_source.later_messages_batched().await?;
 

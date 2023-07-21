@@ -8,18 +8,18 @@ mod common;
 async fn create() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
+    let mut message = ctx
+        .http
+        .create_forum_thread(ctx.forum_channel_id, "sparkle impostor forum thread")
+        .message()
+        .content("forum first message *(should not be cloned)*")?
+        .await?
+        .model()
+        .await?
+        .message;
+
     assert!(matches!(
-        ctx.clone_message(
-            &ctx.http
-                .create_forum_thread(ctx.forum_channel_id, "sparkle impostor forum thread")
-                .message()
-                .content("forum first message *(should not be cloned)*")?
-                .await?
-                .model()
-                .await?
-                .message
-        )
-        .await,
+        ctx.clone_message(&mut message).await,
         Err(Error::SourceThread)
     ));
 
@@ -39,7 +39,7 @@ async fn message() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    let message = ctx
+    let mut message = ctx
         .http
         .create_message(thread.channel.id)
         .content("forum message")?
@@ -47,7 +47,7 @@ async fn message() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .handle_thread()
         .await?
         .create()

@@ -5,12 +5,12 @@ use twilight_validate::message::MessageValidationError;
 /// Error type returned in this library
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// Source message is not in a guild
+    #[error("source message is not in a guild")]
+    SourceNotInGuild,
     /// Source message is related to rich presence
     #[error("source message is related to rich presence")]
     SourceRichPresence,
-    /// Source message has a reaction
-    #[error("source message has a reaction")]
-    SourceReaction,
     /// Source message has a thread created from it
     #[error("source message has a thread created from it")]
     SourceThread,
@@ -23,6 +23,21 @@ pub enum Error {
     /// Source message has a non-URL component
     #[error("source message has a non-URL component")]
     SourceComponent,
+    /// Source message has a reaction
+    #[error("source message has a reaction")]
+    SourceReaction,
+    /// Source message has more reaction emojis than the limit
+    #[error("source message has more reaction emojis than {0}")]
+    SourceReactionNotInLimit(u8),
+    /// Source message has a reaction emoji with count higher than 1
+    #[error("source message has a reaction emoji with count higher than one")]
+    SourceReactionCountNotOne,
+    /// Source message has a reaction emoji that's not unicode
+    #[error("source message has a reaction emoji that's not unicode")]
+    SourceReactionNotUnicode,
+    /// Source message has an external reaction emoji
+    #[error("source message has an external reaction emoji")]
+    SourceReactionExternal,
     /// Source message has a sticker
     #[error("source message has a sticker")]
     SourceSticker,
@@ -35,6 +50,9 @@ pub enum Error {
     /// Source message is not in last `n` messages
     #[error("source message is not in last {0} messages")]
     SourceNotIn(u16),
+    /// Source message has not been created yet
+    #[error("source message has not been created yet")]
+    NotCreated,
     /// An Twilight HTTP error occurred
     #[error("{0}")]
     Http(#[from] twilight_http::Error),

@@ -13,9 +13,10 @@ async fn sanitize_too_short() -> Result<(), anyhow::Error> {
         .await?
         .model()
         .await?;
+
     message.author.name = "a".to_owned();
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .sanitize_username("a", "")
         .create()
         .await?;
@@ -36,9 +37,10 @@ async fn sanitize_too_long() -> Result<(), anyhow::Error> {
         .await?
         .model()
         .await?;
+
     message.author.name = "a".repeat(WEBHOOK_USERNAME_LIMIT_MAX + 1);
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .sanitize_username("", "")
         .create()
         .await?;
@@ -56,9 +58,10 @@ async fn sanitize_substring() -> Result<(), anyhow::Error> {
         .await?
         .model()
         .await?;
+
     message.author.name = "clyde".to_owned();
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .sanitize_username("", "aa")
         .create()
         .await?;

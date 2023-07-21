@@ -12,7 +12,7 @@ mod common;
 async fn url() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("component url *(should be cloned with only the url component)*")?
         .components(&[Component::ActionRow(ActionRow {
@@ -22,7 +22,7 @@ async fn url() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.clone_message(&message).await?;
+    ctx.clone_message(&mut message).await?;
 
     Ok(())
 }
@@ -31,7 +31,7 @@ async fn url() -> Result<(), anyhow::Error> {
 async fn check_invalid() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("component error *(should not be cloned)*")?
         .components(&[Component::ActionRow(ActionRow {
@@ -42,7 +42,7 @@ async fn check_invalid() -> Result<(), anyhow::Error> {
         .await?;
 
     assert!(matches!(
-        ctx.message_source(&message)?.check_component(),
+        ctx.message_source(&mut message)?.check_component(),
         Err(Error::SourceComponent)
     ));
 
@@ -53,7 +53,7 @@ async fn check_invalid() -> Result<(), anyhow::Error> {
 async fn check_valid() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("component valid *(should be cloned with the component)*")?
         .components(&[Component::ActionRow(ActionRow {
@@ -63,7 +63,7 @@ async fn check_valid() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .check_component()?
         .create()
         .await?;

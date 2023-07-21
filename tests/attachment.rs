@@ -9,7 +9,7 @@ mod common;
 async fn link() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("attachment link *(should be cloned with links at the bottom)*")?
         .attachments(&[
@@ -30,7 +30,7 @@ async fn link() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .handle_attachment_link()?
         .create()
         .await?;
@@ -62,11 +62,11 @@ async fn link_content_too_long() -> Result<(), anyhow::Error> {
             - 2,
     ));
 
-    ctx.message_source(&message)?.handle_attachment_link()?;
+    ctx.message_source(&mut message)?.handle_attachment_link()?;
 
     message.content.push('a');
     assert!(matches!(
-        ctx.message_source(&message)?.handle_attachment_link(),
+        ctx.message_source(&mut message)?.handle_attachment_link(),
         Err(Error::SourceContentInvalid)
     ));
 
@@ -78,7 +78,7 @@ async fn link_content_too_long() -> Result<(), anyhow::Error> {
 async fn upload() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = ctx
+    let mut message = ctx
         .create_message()
         .content("attachment upload *(should be cloned with the attachment)*")?
         .attachments(&[Attachment {
@@ -91,7 +91,7 @@ async fn upload() -> Result<(), anyhow::Error> {
         .model()
         .await?;
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .handle_attachment_upload()
         .await?
         .create()

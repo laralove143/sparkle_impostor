@@ -101,9 +101,12 @@ use twilight_http::{request::channel::webhook::ExecuteWebhookAndWait, Client};
 #[cfg(doc)]
 use twilight_model::guild::Permissions;
 use twilight_model::{
-    channel::message::{Embed, MessageFlags},
+    channel::{
+        message::{Embed, MessageFlags},
+        Message,
+    },
     id::{
-        marker::{ChannelMarker, MessageMarker, WebhookMarker},
+        marker::{ChannelMarker, EmojiMarker, GuildMarker, MessageMarker, WebhookMarker},
         Id,
     },
 };
@@ -116,6 +119,8 @@ mod constructor;
 mod delete;
 pub mod error;
 pub mod later_messages;
+pub mod reaction;
+pub mod response;
 pub mod sticker;
 pub mod thread;
 mod username;
@@ -123,7 +128,9 @@ mod username;
 /// A message that can be cloned
 ///
 /// Can be mutated to override some fields, for example to clone it to another
-/// channel, but fields starting with `source` shouldn't be mutated
+/// channel, but fields starting with `source` shouldn't be mutated, in other
+/// words, "message" refers to the created message while "source message" refers
+/// to the message to be cloned from
 ///
 /// You can also provide some of the fields, for example from your cache, so
 /// that they won't be received over the HTTP API
@@ -135,7 +142,7 @@ mod username;
 /// you should use and drop this struct as fast as you can
 #[derive(Debug)]
 pub struct MessageSource<'a> {
-    /// Message's ID
+    /// Source message's ID
     pub source_id: Id<MessageMarker>,
     /// ID of the channel the source message is in
     pub source_channel_id: Id<ChannelMarker>,
@@ -151,6 +158,11 @@ pub struct MessageSource<'a> {
     ///
     /// If the message is in a thread, this should be the parent thread's ID
     pub channel_id: Id<ChannelMarker>,
+    /// ID of the guild the message is in
+    pub guild_id: Id<GuildMarker>,
+    /// Emoji IDs of the guild the message is in, `None` if it has never
+    /// been needed
+    pub guild_emoji_ids: Option<Vec<Id<EmojiMarker>>>,
     /// Username of the message's author
     pub username: String,
     /// URL of message author's avatar
@@ -159,6 +171,8 @@ pub struct MessageSource<'a> {
     pub webhook_name: String,
     /// Info about the message's stickers
     pub sticker_info: sticker::Info,
+    /// Info about the message's reactions
+    pub reaction_info: reaction::Info<'a>,
     /// Info about the message's attachments
     pub attachment_info: attachment::Info<'a>,
     /// Info about the message's components
@@ -169,6 +183,9 @@ pub struct MessageSource<'a> {
     pub later_messages: later_messages::Info,
     /// Webhook ID and token to execute to clone messages with
     pub webhook: Option<(Id<WebhookMarker>, String)>,
+    /// Cloned message's response, `None` if [`MessageSource::create`] wasn't
+    /// called
+    pub response: Option<response::MaybeDeserialized<Message>>,
     /// The client to use for requests
     pub http: &'a Client,
 }
@@ -220,7 +237,10 @@ impl<'a> MessageSource<'a> {
 
         for i in 0..=3_u8 {
             match self.webhook_exec()?.await {
-                Ok(_) => break,
+                Ok(response) => {
+                    self.response = Some(response::MaybeDeserialized::Response(response));
+                    break;
+                }
                 Err(err)
                     if matches!(
                         err.kind(),
@@ -311,5 +331,24 @@ impl<'a> MessageSource<'a> {
 
         // not waiting causes race condition issues in the client
         Ok(execute_webhook.wait())
+    }
+
+    async fn set_guild_emojis(&mut self) -> Result<(), Error> {
+        if self.guild_emoji_ids.is_some() {
+            return Ok(());
+        }
+
+        self.guild_emoji_ids = Some(
+            self.http
+                .emojis(self.guild_id)
+                .await?
+                .models()
+                .await?
+                .into_iter()
+                .map(|emoji| emoji.id)
+                .collect(),
+        );
+
+        Ok(())
     }
 }

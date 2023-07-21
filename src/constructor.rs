@@ -1,21 +1,34 @@
 use twilight_http::Client;
-use twilight_model::channel::{
-    message::{MessageFlags, MessageType},
-    Message,
+use twilight_model::{
+    channel::{
+        message::{MessageFlags, MessageType},
+        Message,
+    },
+    id::{
+        marker::{GuildMarker, UserMarker},
+        Id,
+    },
+    util::ImageHash,
 };
 
-use crate::{attachment, component, error::Error, later_messages, sticker, thread, MessageSource};
+use crate::{
+    attachment, component, error::Error, later_messages, reaction, sticker, thread, MessageSource,
+};
 
 impl<'a> MessageSource<'a> {
     /// Create [`MessageSource`] from a [`Message`]
     ///
+    /// # Warnings
+    ///
+    /// `message.guild_id` is usually `None` even if the message is in a guild,
+    /// make sure this field is actually passed
+    ///
     /// # Errors
+    ///
+    /// Returns [`Error::SourceNotInGuild`] if the message is not in a guild,
     ///
     /// Returns [`Error::SourceRichPresence`] if the message is related
     /// to rich presence, which can't be recreated by bots
-    ///
-    /// Returns [`Error::SourceReaction`] if the message has a reaction, this
-    /// will be handled more gracefully in the future
     ///
     /// Returns [`Error::SourceThread`] if the message has a thread or forum
     /// post created from it, this will be handled more gracefully in the
@@ -35,9 +48,6 @@ impl<'a> MessageSource<'a> {
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::SourceRichPresence);
-        }
-        if !message.reactions.is_empty() {
-            return Err(Error::SourceReaction);
         }
         if message.thread.is_some()
             || message.id == message.channel_id.cast()
@@ -61,6 +71,8 @@ impl<'a> MessageSource<'a> {
         twilight_validate::message::content(&message.content)
             .map_err(|_| Error::SourceContentInvalid)?;
 
+        let guild_id = message.guild_id.ok_or(Error::SourceNotInGuild)?;
+
         let url_components = component::filter_valid(&message.components);
         let has_invalid_components = message.components != url_components;
 
@@ -72,40 +84,27 @@ impl<'a> MessageSource<'a> {
             tts: message.tts,
             flags: message.flags,
             channel_id: message.channel_id,
+            guild_id,
+            guild_emoji_ids: None,
             username: message
                 .member
                 .as_ref()
                 .and_then(|member| member.nick.as_ref())
                 .unwrap_or(&message.author.name)
                 .clone(),
-            avatar_url: if let (Some(guild_id), Some(avatar)) = (
-                message.guild_id,
+            avatar_url: avatar_url(
+                message.author.id,
+                guild_id,
+                message.author.discriminator,
+                message.author.avatar,
                 message.member.as_ref().and_then(|member| member.avatar),
-            ) {
-                format!(
-                    "https://cdn.discordapp.com/guilds/{guild_id}/users/{}/avatars/{avatar}.{}",
-                    message.author.id,
-                    if avatar.is_animated() { "gif" } else { "png" }
-                )
-            } else if let Some(avatar) = message.author.avatar {
-                format!(
-                    "https://cdn.discordapp.com/avatars/{}/{avatar}.{}",
-                    message.author.id,
-                    if avatar.is_animated() { "gif" } else { "png" }
-                )
-            } else {
-                format!(
-                    "https://cdn.discordapp.com/embed/avatars/{}.png",
-                    if message.author.discriminator == 0 {
-                        (message.author.id.get() >> 22_u8) % 6
-                    } else {
-                        u64::from(message.author.discriminator % 5)
-                    }
-                )
-            },
+            ),
             webhook_name: "Message Cloner".to_owned(),
             sticker_info: sticker::Info {
                 exists: !message.sticker_items.is_empty(),
+            },
+            reaction_info: reaction::Info {
+                reactions: &message.reactions,
             },
             attachment_info: attachment::Info {
                 attachments: &message.attachments,
@@ -124,7 +123,40 @@ impl<'a> MessageSource<'a> {
                 is_source_created: false,
                 is_later_message_sources_created: false,
             },
+            response: None,
             http,
         })
+    }
+}
+
+#[allow(clippy::option_if_let_else)]
+fn avatar_url(
+    user_id: Id<UserMarker>,
+    guild_id: Id<GuildMarker>,
+    user_discriminator: u16,
+    user_avatar: Option<ImageHash>,
+    member_avatar: Option<ImageHash>,
+) -> String {
+    if let Some(avatar) = member_avatar {
+        format!(
+            "https://cdn.discordapp.com/guilds/{guild_id}/users/{}/avatars/{avatar}.{}",
+            user_id,
+            if avatar.is_animated() { "gif" } else { "png" }
+        )
+    } else if let Some(avatar) = user_avatar {
+        format!(
+            "https://cdn.discordapp.com/avatars/{}/{avatar}.{}",
+            user_id,
+            if avatar.is_animated() { "gif" } else { "png" }
+        )
+    } else {
+        format!(
+            "https://cdn.discordapp.com/embed/avatars/{}.png",
+            if user_discriminator == 0 {
+                (user_id.get() >> 22_u8) % 6
+            } else {
+                u64::from(user_discriminator % 5)
+            }
+        )
     }
 }

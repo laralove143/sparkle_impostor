@@ -8,9 +8,9 @@ mod common;
 async fn one() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = create_message(&ctx).await?;
+    let mut message = create_message(&ctx).await?;
 
-    ctx.message_source(&message)?.delete().await?;
+    ctx.message_source(&mut message)?.delete().await?;
 
     Ok(())
 }
@@ -19,10 +19,10 @@ async fn one() -> Result<(), anyhow::Error> {
 async fn bulk() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = create_message(&ctx).await?;
+    let mut message = create_message(&ctx).await?;
     create_message(&ctx).await?;
 
-    let mut message_source = ctx.message_source(&message)?;
+    let mut message_source = ctx.message_source(&mut message)?;
     message_source.later_messages().await?;
     message_source.delete().await?;
 
@@ -33,10 +33,10 @@ async fn bulk() -> Result<(), anyhow::Error> {
 async fn check_in_last_side_effect() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let message = create_message(&ctx).await?;
+    let mut message = create_message(&ctx).await?;
     create_message(&ctx).await?;
 
-    ctx.message_source(&message)?
+    ctx.message_source(&mut message)?
         .check_is_in_last(2)
         .await?
         .delete()

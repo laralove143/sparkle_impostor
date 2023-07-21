@@ -7,7 +7,7 @@ use twilight_model::{
     channel::{ChannelType, Message},
     guild::Member,
     id::{
-        marker::{ChannelMarker, GuildMarker},
+        marker::{ChannelMarker, EmojiMarker, GuildMarker},
         Id,
     },
 };
@@ -18,6 +18,7 @@ pub struct Context {
     pub channel_id: Id<ChannelMarker>,
     pub forum_channel_id: Id<ChannelMarker>,
     pub not_last_source_thread_id: Id<ChannelMarker>,
+    pub guild_emoji_id: Id<EmojiMarker>,
     pub member: Member,
     pub owner: Member,
 }
@@ -38,6 +39,7 @@ impl Context {
         } else {
             create_not_last_source_thread(&http, channel_id).await?
         };
+        let guild_emoji_id = env::var("GUILD_EMOJI_ID")?.parse()?;
 
         let guild_id = http
             .channel(channel_id)
@@ -74,6 +76,7 @@ impl Context {
             channel_id,
             forum_channel_id,
             not_last_source_thread_id,
+            guild_emoji_id,
             member,
             owner,
         })
@@ -87,13 +90,17 @@ impl Context {
     #[allow(dead_code)]
     pub fn message_source<'a>(
         &'a self,
-        message: &'a Message,
+        message: &'a mut Message,
     ) -> Result<MessageSource<'a>, anyhow::Error> {
+        message.guild_id = Some(self.guild_id);
+
         Ok(MessageSource::from_message(message, &self.http)?)
     }
 
     #[allow(dead_code)]
-    pub async fn clone_message(&self, message: &Message) -> Result<(), Error> {
+    pub async fn clone_message(&self, message: &mut Message) -> Result<(), Error> {
+        message.guild_id = Some(self.guild_id);
+
         MessageSource::from_message(message, &self.http)?
             .create()
             .await?;
@@ -164,10 +171,13 @@ fn _source_construct() {
         tts: false,
         flags: None,
         channel_id: Id::new(1),
+        guild_id: Id::new(1),
+        guild_emoji_ids: None,
         username: String::new(),
         avatar_url: String::new(),
         webhook_name: String::new(),
         sticker_info: sparkle_impostor::sticker::Info { exists: false },
+        reaction_info: sparkle_impostor::reaction::Info { reactions: &[] },
         attachment_info: sparkle_impostor::attachment::Info {
             attachments: &[],
             #[cfg(feature = "upload")]
@@ -185,6 +195,7 @@ fn _source_construct() {
             is_later_message_sources_created: false,
         },
         webhook: None,
+        response: None,
         http: &Client::new(String::new()),
     });
 }

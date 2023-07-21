@@ -23,6 +23,7 @@ Before starting, set these environment variables, you can also put them in a `.e
 - `FORUM_CHANNEL_ID`: The forum channel in which cloning messages/threads in forum channels will be tested
 - `NOT_LAST_SOURCE_THREAD_ID`: The bot will create a thread and spam to 200 in it the first time the tests are ran, to
   avoid doing this again, set this to the ID of this thread
+- `GUILD_EMOJI_ID`: ID of an emoji that's in the guild `CHANNEL_ID` is in
 
 Required permissions in `CHANNEL_ID` and `FORUM_CHANNEL_ID`:
 
