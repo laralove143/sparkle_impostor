@@ -25,29 +25,29 @@ impl<'a> MessageSource<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceNotInGuild`] if the message is not in a guild,
+    /// Returns [`Error::NotInGuild`] if the message is not in a guild,
     ///
-    /// Returns [`Error::SourceRichPresence`] if the message is related
+    /// Returns [`Error::RichPresence`] if the message is related
     /// to rich presence, which can't be recreated by bots
     ///
-    /// Returns [`Error::SourceThread`] if the message has a thread or forum
+    /// Returns [`Error::Thread`] if the message has a thread or forum
     /// post created from it, this will be handled more gracefully in the
     /// future
     ///
-    /// Returns [`Error::SourceVoice`] if the message is a voice message, which
+    /// Returns [`Error::Voice`] if the message is a voice message, which
     /// bots currently can't create
     ///
-    /// Returns [`Error::SourceSystem`] if the message's type isn't
+    /// Returns [`Error::System`] if the message's type isn't
     /// [`MessageType::Regular`] or [`MessageType::Reply`] or has role
     /// subscription data, which are edge-cases that can't be replicated
     /// correctly
     ///
-    /// Returns [`Error::SourceContentInvalid`] if the message's content is
+    /// Returns [`Error::ContentInvalid`] if the message's content is
     /// invalid, this may happen when the author has used Nitro perks to send a
     /// message with over 2000 characters
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
-            return Err(Error::SourceRichPresence);
+            return Err(Error::RichPresence);
         }
         if message.thread.is_some()
             || message.id == message.channel_id.cast()
@@ -55,23 +55,22 @@ impl<'a> MessageSource<'a> {
                 .flags
                 .is_some_and(|flags| flags.contains(MessageFlags::HAS_THREAD))
         {
-            return Err(Error::SourceThread);
+            return Err(Error::Thread);
         }
         if message
             .flags
             .is_some_and(|flags| flags.contains(MessageFlags::IS_VOICE_MESSAGE))
         {
-            return Err(Error::SourceVoice);
+            return Err(Error::Voice);
         }
         if !matches!(message.kind, MessageType::Regular | MessageType::Reply)
             || message.role_subscription_data.is_some()
         {
-            return Err(Error::SourceSystem);
+            return Err(Error::System);
         }
-        twilight_validate::message::content(&message.content)
-            .map_err(|_| Error::SourceContentInvalid)?;
+        twilight_validate::message::content(&message.content).map_err(|_| Error::ContentInvalid)?;
 
-        let guild_id = message.guild_id.ok_or(Error::SourceNotInGuild)?;
+        let guild_id = message.guild_id.ok_or(Error::NotInGuild)?;
 
         let url_components = component::filter_valid(&message.components);
         let has_invalid_components = message.components != url_components;

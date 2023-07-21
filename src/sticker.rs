@@ -14,11 +14,11 @@ impl MessageSource<'_> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceSticker`] if the message has a sticker
+    /// Returns [`Error::Sticker`] if the message has a sticker
     #[allow(clippy::missing_const_for_fn)]
     pub fn check_sticker(self) -> Result<Self, Error> {
         if self.sticker_info.exists {
-            return Err(Error::SourceSticker);
+            return Err(Error::Sticker);
         }
 
         Ok(self)

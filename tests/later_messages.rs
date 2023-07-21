@@ -24,7 +24,7 @@ async fn check_err() -> Result<(), anyhow::Error> {
 
     assert!(matches!(
         ctx.message_source(&mut message)?.check_is_in_last(2).await,
-        Err(Error::SourceNotIn(2))
+        Err(Error::SourceAboveLimit(2))
     ));
 
     Ok(())

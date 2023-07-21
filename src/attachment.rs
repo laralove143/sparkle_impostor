@@ -21,11 +21,11 @@ impl MessageSource<'_> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceAttachment`] if the message has an attachment
+    /// Returns [`Error::Attachment`] if the message has an attachment
     #[allow(clippy::missing_const_for_fn)]
     pub fn check_attachment(self) -> Result<Self, Error> {
         if !self.attachment_info.attachments.is_empty() {
-            return Err(Error::SourceAttachment);
+            return Err(Error::Attachment);
         }
 
         Ok(self)
@@ -41,7 +41,7 @@ impl MessageSource<'_> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceContentInvalid`] if the message content becomes
+    /// Returns [`Error::ContentInvalid`] if the message content becomes
     /// too long after adding the links
     pub fn handle_attachment_link(mut self) -> Result<Self, Error> {
         if self
@@ -61,7 +61,7 @@ impl MessageSource<'_> {
             .saturating_add(1)
             > MESSAGE_CONTENT_LENGTH_MAX
         {
-            return Err(Error::SourceContentInvalid);
+            return Err(Error::ContentInvalid);
         }
 
         self.content.push('\n');
@@ -88,7 +88,7 @@ impl<'a> MessageSource<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceAttachmentTooLarge`] if the combined size of the
+    /// Returns [`Error::AttachmentTooLarge`] if the combined size of the
     /// attachments is over 25 MB
     ///
     /// Returns [`Error::Reqwest`] if downloading the attachments fails
@@ -101,7 +101,7 @@ impl<'a> MessageSource<'a> {
             .sum::<u64>()
             > 25 * 1024 * 1024
         {
-            return Err(Error::SourceAttachmentTooLarge);
+            return Err(Error::AttachmentTooLarge);
         }
 
         let client = Client::new();

@@ -67,7 +67,7 @@ async fn link_content_too_long() -> Result<(), anyhow::Error> {
     message.content.push('a');
     assert!(matches!(
         ctx.message_source(&mut message)?.handle_attachment_link(),
-        Err(Error::SourceContentInvalid)
+        Err(Error::ContentInvalid)
     ));
 
     Ok(())

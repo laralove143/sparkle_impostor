@@ -20,7 +20,7 @@ async fn create() -> Result<(), anyhow::Error> {
 
     assert!(matches!(
         ctx.clone_message(&mut message).await,
-        Err(Error::SourceThread)
+        Err(Error::Thread)
     ));
 
     Ok(())

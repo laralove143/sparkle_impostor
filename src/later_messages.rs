@@ -25,7 +25,7 @@ pub struct Info {
 
 impl<'a> MessageSource<'a> {
     /// Check if this is in the last `n` messages in the channel, return
-    /// [`Error::SourceNotIn`] if not
+    /// [`Error::SourceAboveLimit`] if not
     ///
     /// Make sure the bot has these additional permissions
     /// - [`Permissions::READ_MESSAGE_HISTORY`]
@@ -41,7 +41,7 @@ impl<'a> MessageSource<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceNotIn`] if the message isn't in the last `n`
+    /// Returns [`Error::SourceAboveLimit`] if the message isn't in the last `n`
     /// messages
     ///
     /// Returns [`Error::Http`] if getting channel messages fails
@@ -141,7 +141,7 @@ impl<'a> MessageSource<'a> {
         loop {
             if let Some(limit_inner) = limit {
                 if self.later_messages.messages.len() >= usize::from(limit_inner) {
-                    return Err(Error::SourceNotIn(limit_inner));
+                    return Err(Error::SourceAboveLimit(limit_inner));
                 }
             }
             if self.later_messages.is_complete {

@@ -85,7 +85,7 @@ async fn check_not_external() -> Result<(), anyhow::Error> {
         ctx.message_source(&mut message)?
             .check_reaction(sparkle_impostor::reaction::CheckBehavior::NotExternal)
             .await,
-        Err(Error::SourceReactionExternal)
+        Err(Error::ReactionExternal)
     ));
 
     Ok(())

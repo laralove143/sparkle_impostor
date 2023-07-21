@@ -43,7 +43,7 @@ async fn check_invalid() -> Result<(), anyhow::Error> {
 
     assert!(matches!(
         ctx.message_source(&mut message)?.check_component(),
-        Err(Error::SourceComponent)
+        Err(Error::Component)
     ));
 
     Ok(())

@@ -7,49 +7,56 @@ use twilight_validate::message::MessageValidationError;
 pub enum Error {
     /// Source message is not in a guild
     #[error("source message is not in a guild")]
-    SourceNotInGuild,
+    NotInGuild,
     /// Source message is related to rich presence
     #[error("source message is related to rich presence")]
-    SourceRichPresence,
+    RichPresence,
     /// Source message has a thread created from it
     #[error("source message has a thread created from it")]
-    SourceThread,
+    Thread,
     /// Source message is a voice message
     #[error("source message is a voice message")]
-    SourceVoice,
+    Voice,
     /// Source message is a system message
     #[error("source message is a system message")]
-    SourceSystem,
+    System,
     /// Source message has a non-URL component
     #[error("source message has a non-URL component")]
-    SourceComponent,
+    Component,
     /// Source message has a reaction
     #[error("source message has a reaction")]
-    SourceReaction,
+    Reaction,
     /// Source message has more reaction emojis than the limit
     #[error("source message has more reaction emojis than {0}")]
-    SourceReactionNotInLimit(u8),
+    ReactionAboveLimit(u8),
     /// Source message has a reaction emoji with count higher than 1
     #[error("source message has a reaction emoji with count higher than one")]
-    SourceReactionCountNotOne,
+    ReactionCountMultiple,
     /// Source message has a reaction emoji that's not unicode
     #[error("source message has a reaction emoji that's not unicode")]
-    SourceReactionNotUnicode,
+    ReactionCustom,
     /// Source message has an external reaction emoji
     #[error("source message has an external reaction emoji")]
-    SourceReactionExternal,
+    ReactionExternal,
     /// Source message has a sticker
     #[error("source message has a sticker")]
-    SourceSticker,
+    Sticker,
     /// Source message has an attachment
     #[error("source message has an attachment")]
-    SourceAttachment,
+    Attachment,
+    /// Source message's attachments are too large
+    ///
+    /// This happens when the author has used Nitro perks to send a message with
+    /// over 25 MB of attachments
+    #[cfg(feature = "upload")]
+    #[error("source message's attachments are too large")]
+    AttachmentTooLarge,
     /// Source message's content is invalid
     #[error("source message's content is invalid")]
-    SourceContentInvalid,
+    ContentInvalid,
     /// Source message is not in last `n` messages
     #[error("source message is not in last {0} messages")]
-    SourceNotIn(u16),
+    SourceAboveLimit(u16),
     /// Source message has not been created yet
     #[error("source message has not been created yet")]
     NotCreated,
@@ -65,13 +72,6 @@ pub enum Error {
     /// A message validation error was returned
     #[error("{0}")]
     MessageValidation(#[from] MessageValidationError),
-    /// Source message's attachments are too large
-    ///
-    /// This happens when the author has used Nitro perks to send a message with
-    /// over 25 MB of attachments
-    #[cfg(feature = "upload")]
-    #[error("source message's attachments are too large")]
-    SourceAttachmentTooLarge,
     /// A reqwest error was returned
     #[cfg(feature = "upload")]
     #[error("{0}")]

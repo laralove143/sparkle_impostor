@@ -60,21 +60,21 @@ impl<'a> MessageSource<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::SourceReaction`] if [`CheckBehavior::None`] was passed
+    /// Returns [`Error::Reaction`] if [`CheckBehavior::None`] was passed
     /// and the message has a reaction
     ///
-    /// Returns [`Error::SourceReactionNotInLimit`] if [`CheckBehavior::Limit`]
+    /// Returns [`Error::ReactionAboveLimit`] if [`CheckBehavior::Limit`]
     /// was passed and the message has more reactions than the limit
     ///
-    /// Returns [`Error::SourceReactionCountNotOne`] if
+    /// Returns [`Error::ReactionCountMultiple`] if
     /// [`CheckBehavior::CountOne`] was passed and the message has a reaction
     /// emoji with count higher than 1
     ///
-    /// Returns [`Error::SourceReactionNotUnicode`] if
+    /// Returns [`Error::ReactionCustom`] if
     /// [`CheckBehavior::Unicode`] was passed and the message has a non-unicode
     /// reaction emoji
     ///
-    /// Returns [`Error::SourceReactionExternal`] if
+    /// Returns [`Error::ReactionExternal`] if
     /// [`CheckBehavior::NotExternal`] was passed and and the message has an
     /// external reaction emoji
     ///
@@ -89,13 +89,11 @@ impl<'a> MessageSource<'a> {
         behavior: CheckBehavior,
     ) -> Result<MessageSource<'a>, Error> {
         match behavior {
-            CheckBehavior::None if !self.reaction_info.reactions.is_empty() => {
-                Err(Error::SourceReaction)
-            }
+            CheckBehavior::None if !self.reaction_info.reactions.is_empty() => Err(Error::Reaction),
             CheckBehavior::Limit(limit)
                 if self.reaction_info.reactions.len() <= usize::from(limit) =>
             {
-                Err(Error::SourceReactionNotInLimit(limit))
+                Err(Error::ReactionAboveLimit(limit))
             }
             CheckBehavior::CountOne
                 if self
@@ -104,10 +102,10 @@ impl<'a> MessageSource<'a> {
                     .iter()
                     .any(|reaction| reaction.count > 1) =>
             {
-                Err(Error::SourceReactionCountNotOne)
+                Err(Error::ReactionCountMultiple)
             }
             CheckBehavior::Unicode if custom_emoji_exists(self.reaction_info.reactions) => {
-                Err(Error::SourceReactionNotUnicode)
+                Err(Error::ReactionCustom)
             }
             CheckBehavior::NotExternal => {
                 if !custom_emoji_exists(self.reaction_info.reactions) {
@@ -119,7 +117,7 @@ impl<'a> MessageSource<'a> {
                 if self.reaction_info.reactions.iter().any(|reaction| {
                     is_reaction_emoji_external(reaction, self.guild_emoji_ids.as_ref().unwrap())
                 }) {
-                    return Err(Error::SourceReactionExternal);
+                    return Err(Error::ReactionExternal);
                 }
 
                 Ok(self)
