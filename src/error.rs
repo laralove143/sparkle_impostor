@@ -1,6 +1,6 @@
 //! The [`Error`] enum
 
-use twilight_validate::message::MessageValidationError;
+use twilight_validate::{channel::ChannelValidationError, message::MessageValidationError};
 
 /// Error type returned in this library
 #[derive(Debug, thiserror::Error)]
@@ -11,9 +11,6 @@ pub enum Error {
     /// Source message is related to rich presence
     #[error("source message is related to rich presence")]
     RichPresence,
-    /// Source message has a thread created from it
-    #[error("source message has a thread created from it")]
-    Thread,
     /// Source message is a voice message
     #[error("source message is a voice message")]
     Voice,
@@ -72,6 +69,9 @@ pub enum Error {
     /// A message validation error was returned
     #[error("{0}")]
     MessageValidation(#[from] MessageValidationError),
+    /// A channel validation error was returned
+    #[error("{0}")]
+    ChannelValidation(#[from] ChannelValidationError),
     /// A reqwest error was returned
     #[cfg(feature = "upload")]
     #[error("{0}")]

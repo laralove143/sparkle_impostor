@@ -30,10 +30,6 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::RichPresence`] if the message is related
     /// to rich presence, which can't be recreated by bots
     ///
-    /// Returns [`Error::Thread`] if the message has a thread or forum
-    /// post created from it, this will be handled more gracefully in the
-    /// future
-    ///
     /// Returns [`Error::Voice`] if the message is a voice message, which
     /// bots currently can't create
     ///
@@ -48,14 +44,6 @@ impl<'a> MessageSource<'a> {
     pub fn from_message(message: &'a Message, http: &'a Client) -> Result<Self, Error> {
         if message.activity.is_some() || message.application.is_some() {
             return Err(Error::RichPresence);
-        }
-        if message.thread.is_some()
-            || message.id == message.channel_id.cast()
-            || message
-                .flags
-                .is_some_and(|flags| flags.contains(MessageFlags::HAS_THREAD))
-        {
-            return Err(Error::Thread);
         }
         if message
             .flags
@@ -114,7 +102,12 @@ impl<'a> MessageSource<'a> {
                 url_components,
                 has_invalid_components,
             },
-            thread_info: thread::Info::Unknown,
+            thread_info: message
+                .thread
+                .as_ref()
+                .map_or(thread::Info::Unknown, |thread| {
+                    thread::Info::CreatedUnknown(Box::new(thread.clone()))
+                }),
             webhook: None,
             later_messages: later_messages::Info {
                 messages: vec![],

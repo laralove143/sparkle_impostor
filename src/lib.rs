@@ -127,15 +127,22 @@ mod username;
 
 /// A message that can be cloned
 ///
+/// # Mutation
+///
 /// Can be mutated to override some fields, for example to clone it to another
-/// channel, but fields starting with `source` shouldn't be mutated, in other
+/// channel
+///
+/// Since most methods mutate the source, it's recommend to mutate the message
+/// right before calling [`MessageSource::create`]
+///
+/// Fields starting with `source` shouldn't be mutated, in other
 /// words, "message" refers to the created message while "source message" refers
 /// to the message to be cloned from
 ///
 /// You can also provide some of the fields, for example from your cache, so
 /// that they won't be received over the HTTP API
 ///
-/// # Warning
+/// # Warnings
 ///
 /// Many of the fields here are stateful, there are no guarantees on the
 /// validity of these since this doesn't have access to the gateway, this means
@@ -222,7 +229,7 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::Http`] if getting, creating or executing the webhook
     /// fails
     ///
-    /// Returns [`Error::DeserializeBody`] if deserializing the webhook fails
+    /// Returns [`Error::DeserializeBody`] if deserializing the webhook
     ///
     /// Returns [`Error::Validation`] if the webhook name is invalid
     ///
@@ -232,6 +239,8 @@ impl<'a> MessageSource<'a> {
     /// # Panics
     ///
     /// If the webhook that was just created doesn't have a token
+    ///
+    /// If the message was used to create a post but the post's name is `None`
     pub async fn create(mut self) -> Result<MessageSource<'a>, Error> {
         self.set_webhook().await?;
 
@@ -315,8 +324,12 @@ impl<'a> MessageSource<'a> {
             .avatar_url(&self.avatar_url)
             .tts(self.tts);
 
-        if let thread::Info::Known(Some(thread_id)) = self.thread_info {
-            execute_webhook = execute_webhook.thread_id(thread_id);
+        match &self.thread_info {
+            thread::Info::In(thread_id) => execute_webhook = execute_webhook.thread_id(*thread_id),
+            thread::Info::CreatedPost(channel) => {
+                execute_webhook = execute_webhook.thread_name(channel.name.as_ref().unwrap());
+            }
+            _ => {}
         }
 
         if let Some(flags) = self.flags {

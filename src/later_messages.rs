@@ -187,7 +187,7 @@ impl<'a> MessageSource<'a> {
             .iter()
             .map(|message| {
                 MessageSource::from_message(message, self.http).map(|mut source| {
-                    source.thread_info = self.thread_info;
+                    source.thread_info = self.thread_info.clone();
                     source.channel_id = self.channel_id;
                     source
                 })
