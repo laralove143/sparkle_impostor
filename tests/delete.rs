@@ -61,7 +61,14 @@ async fn in_thread() -> Result<(), anyhow::Error> {
         .await?
         .model()
         .await?;
-    let mut message = create_message(&ctx).await?;
+
+    let mut message = ctx
+        .http
+        .create_message(thread.id)
+        .content("delete in thread *(should be deleted.. hopefully you're not reading this)*")?
+        .await?
+        .model()
+        .await?;
 
     ctx.message_source(&mut message)?
         .handle_thread()
