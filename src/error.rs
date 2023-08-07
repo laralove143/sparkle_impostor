@@ -57,6 +57,9 @@ pub enum Error {
     /// Source message has not been created yet
     #[error("source message has not been created yet")]
     NotCreated,
+    /// Deleting messages would use more than `n` requests
+    #[error("deleting messages would use more than {0} request")]
+    DeleteRequestCountAboveLimit(u16),
     /// An Twilight HTTP error occurred
     #[error("{0}")]
     Http(#[from] twilight_http::Error),
