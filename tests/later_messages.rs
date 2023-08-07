@@ -1,10 +1,9 @@
 use common::Context;
 use sparkle_impostor::error::Error;
-use twilight_model::{
-    channel::{ChannelType, Message},
-    id::Id,
-};
+use twilight_model::id::Id;
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
+
+use crate::common::create_later_messages;
 
 mod common;
 
@@ -52,56 +51,52 @@ async fn check_ok() -> Result<(), anyhow::Error> {
 }
 
 #[tokio::test]
-async fn create_later() -> Result<(), anyhow::Error> {
+async fn create_later_thread() -> Result<(), anyhow::Error> {
     let ctx = Context::new().await;
 
-    let mut messages: Vec<Message> = vec![];
-    loop {
-        let get_messages = ctx
-            .http
-            .channel_messages(ctx.not_last_source_thread_id)
-            .limit(100)?;
-
-        let mut message_batch = if messages.is_empty() {
-            get_messages.await?.models().await?
-        } else {
-            get_messages
-                .before(messages.last().unwrap().id)
-                .await?
-                .models()
-                .await?
-        };
-
-        let is_done = message_batch.is_empty() || message_batch.len() % 100 != 0;
-
-        messages.append(&mut message_batch);
-
-        if is_done {
-            break;
-        }
-    }
-
-    let mut message_source = ctx.message_source(messages.last_mut().unwrap())?;
-    message_source.channel_id = ctx
+    let mut thread_message = ctx
         .http
-        .create_thread(
-            ctx.channel_id,
-            "sparkle impostor create later messages target",
-            ChannelType::PublicThread,
-        )?
+        .message(ctx.channel_id, ctx.not_last_source_thread_id.cast())
         .await?
         .model()
+        .await?;
+
+    let message_source = ctx
+        .message_source(&mut thread_message)?
+        .handle_thread()
         .await?
-        .id;
+        .create()
+        .await?
+        .handle_thread_created()
+        .await?;
 
-    message_source = message_source.handle_thread().await?.create().await?;
+    create_later_messages(message_source).await?;
 
-    let later_messages = message_source.later_messages().await?;
+    Ok(())
+}
 
-    assert!(later_messages.iter().all(Result::is_ok));
-    for later_message in later_messages {
-        later_message?.create().await?;
+#[tokio::test]
+async fn create_later_channel() -> Result<(), anyhow::Error> {
+    let ctx = Context::new().await;
+
+    let mut maybe_first_message = None;
+    for i in 1..=3 {
+        let resp = ctx
+            .create_message()
+            .content(&format!(
+                "channel message create later {i} *(should be cloned with the same order)*"
+            ))?
+            .await?;
+
+        if i == 1 {
+            maybe_first_message = Some(resp.model().await?);
+        }
     }
+    let mut first_message = maybe_first_message.unwrap();
+
+    let message_source = ctx.message_source(&mut first_message)?.create().await?;
+
+    create_later_messages(message_source).await?;
 
     Ok(())
 }
@@ -112,16 +107,18 @@ async fn batched() -> Result<(), anyhow::Error> {
 
     let mut messages = vec![];
     for i in 1_u8..=4 {
-        messages.push(
-            ctx.create_message()
-                .content(&format!(
-                    "batched messages {i} *(should be cloned with 2 and 3 combined into one \
-                     message)*"
-                ))?
-                .await?
-                .model()
-                .await?,
-        );
+        let mut message = ctx
+            .create_message()
+            .content(&format!(
+                "batched messages {i} *(should be cloned with 2 and 3 combined into one message)*"
+            ))?
+            .await?
+            .model()
+            .await?;
+
+        message.guild_id = Some(ctx.guild_id);
+
+        messages.push(message);
     }
     messages.get_mut(1).unwrap().author.id = Id::new(1);
     messages.get_mut(2).unwrap().author.id = Id::new(1);
@@ -162,14 +159,9 @@ async fn batched_content_too_long() -> Result<(), anyhow::Error> {
             .await?;
     }
 
-    let mut message_source = ctx.message_source(&mut message)?.create().await?;
+    let message_source = ctx.message_source(&mut message)?.create().await?;
 
-    let later_messages = message_source.later_messages_batched().await?;
-
-    assert!(later_messages.iter().all(Result::is_ok));
-    for later_message in later_messages {
-        later_message?.create().await?;
-    }
+    create_later_messages(message_source).await?;
 
     Ok(())
 }
@@ -193,14 +185,9 @@ async fn batched_content_not_too_long() -> Result<(), anyhow::Error> {
             .await?;
     }
 
-    let mut message_source = ctx.message_source(&mut message)?.create().await?;
+    let message_source = ctx.message_source(&mut message)?.create().await?;
 
-    let later_messages = message_source.later_messages_batched().await?;
-
-    assert!(later_messages.iter().all(Result::is_ok));
-    for later_message in later_messages {
-        later_message?.create().await?;
-    }
+    create_later_messages(message_source).await?;
 
     Ok(())
 }

@@ -5,7 +5,7 @@ use twilight_model::channel::Message;
 use twilight_model::guild::Permissions;
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
-use crate::{error::Error, MessageSource};
+use crate::{error::Error, thread, MessageSource};
 
 /// Info about the later messages in the channel
 #[derive(Debug, Clone)]
@@ -148,9 +148,9 @@ impl<'a> MessageSource<'a> {
                 return Ok(());
             }
 
-            let message_batch = self
+            let mut message_batch = self
                 .http
-                .channel_messages(self.source_channel_id)
+                .channel_messages(self.source_thread_id.unwrap_or(self.source_channel_id))
                 .limit(limit.unwrap_or(100).min(100))?
                 .after(
                     self.later_messages
@@ -162,6 +162,10 @@ impl<'a> MessageSource<'a> {
                 .models()
                 .await?;
 
+            for message in &mut message_batch {
+                message.guild_id = Some(self.guild_id);
+            }
+
             self.later_messages.is_complete =
                 message_batch.is_empty() || message_batch.len() % 100 != 0;
 
@@ -171,10 +175,13 @@ impl<'a> MessageSource<'a> {
                     // skip message sent in self.create
                     .skip(usize::from(
                         self.later_messages.is_source_created
+                            && self.source_thread_id == self.thread_info.id()
                             && self.channel_id == self.source_channel_id
                             && self.later_messages.messages.is_empty(),
                     ))
-                    .rev(),
+                    .rev()
+                    // skip the system message when used in threads
+                    .skip(usize::from(self.thread_info.id().is_some())),
             );
         }
     }
@@ -187,7 +194,10 @@ impl<'a> MessageSource<'a> {
             .iter()
             .map(|message| {
                 MessageSource::from_message(message, self.http).map(|mut source| {
-                    source.thread_info = self.thread_info.clone();
+                    source.thread_info = self
+                        .thread_info
+                        .id()
+                        .map_or(thread::Info::NotIn, thread::Info::In);
                     source.channel_id = self.channel_id;
                     source
                 })

@@ -34,6 +34,18 @@ pub enum Info {
     Unknown,
 }
 
+impl Info {
+    pub(crate) fn id(&self) -> Option<Id<ChannelMarker>> {
+        match self {
+            Self::In(id) => Some(*id),
+            Self::Created(thread) | Self::CreatedPost(thread) | Self::CreatedUnknown(thread) => {
+                Some(thread.id)
+            }
+            _ => None,
+        }
+    }
+}
+
 impl<'a> MessageSource<'a> {
     /// Handle the message being in a thread
     ///
@@ -82,6 +94,8 @@ impl<'a> MessageSource<'a> {
             Info::In(thread.id)
         };
 
+        self.source_thread_id = self.thread_info.id();
+
         Ok(self)
     }
 
@@ -92,6 +106,10 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::ChannelValidation`] if the thread is invalid, shouldn't
     /// happen unless the it was mutated
     ///
+    /// Returns [`Error::Http`] if creating the thread fails
+    ///
+    /// Returns [`Error::DeserializeBody`] if deserializing the thread fails
+    ///
     /// # Panics
     ///
     /// If the thread's name is `None`
@@ -99,13 +117,18 @@ impl<'a> MessageSource<'a> {
     /// If called before [`MessageSource::create`]
     pub async fn handle_thread_created(mut self) -> Result<MessageSource<'a>, Error> {
         if let Info::Created(thread) = &self.thread_info {
-            self.http
+            let thread_new = self
+                .http
                 .create_thread_from_message(
                     self.channel_id,
                     self.response.as_mut().unwrap().model().await?.id,
                     thread.name.as_ref().unwrap(),
                 )?
+                .await?
+                .model()
                 .await?;
+
+            self.thread_info = Info::Created(Box::new(thread_new));
         }
 
         Ok(self)

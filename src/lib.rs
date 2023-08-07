@@ -153,6 +153,8 @@ pub struct MessageSource<'a> {
     pub source_id: Id<MessageMarker>,
     /// ID of the channel the source message is in
     pub source_channel_id: Id<ChannelMarker>,
+    /// ID of the thread the source message is in
+    pub source_thread_id: Option<Id<ChannelMarker>>,
     /// Content of the message
     pub content: String,
     /// Embeds in the message
@@ -210,7 +212,7 @@ impl<'a> MessageSource<'a> {
     /// - [`Permissions::MANAGE_WEBHOOKS`]
     ///
     /// Because rate-limits for webhook executions can't be handled
-    /// beforehand, retries each execution up to 3 times, if all of these
+    /// beforehand, retries each execution up to 5 times, if all of these
     /// are rate-limited, returns the HTTP error
     ///
     /// # Warnings
@@ -244,7 +246,7 @@ impl<'a> MessageSource<'a> {
     pub async fn create(mut self) -> Result<MessageSource<'a>, Error> {
         self.set_webhook().await?;
 
-        for i in 0..=3_u8 {
+        for i in 0..=5_u8 {
             match self.webhook_exec()?.await {
                 Ok(response) => {
                     self.response = Some(response::MaybeDeserialized::Response(response));
@@ -259,7 +261,7 @@ impl<'a> MessageSource<'a> {
                         }
                     ) =>
                 {
-                    if i == 3 {
+                    if i == 5 {
                         return Err(Error::Http(err));
                     }
                     continue;

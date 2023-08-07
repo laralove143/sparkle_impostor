@@ -63,9 +63,17 @@ impl<'a> MessageSource<'a> {
         let url_components = component::filter_valid(&message.components);
         let has_invalid_components = message.components != url_components;
 
+        let thread_info = message
+            .thread
+            .as_ref()
+            .map_or(thread::Info::Unknown, |thread| {
+                thread::Info::CreatedUnknown(Box::new(thread.clone()))
+            });
+
         Ok(MessageSource {
             source_id: message.id,
             source_channel_id: message.channel_id,
+            source_thread_id: thread_info.id(),
             content: message.content.clone(),
             embeds: &message.embeds,
             tts: message.tts,
@@ -102,12 +110,7 @@ impl<'a> MessageSource<'a> {
                 url_components,
                 has_invalid_components,
             },
-            thread_info: message
-                .thread
-                .as_ref()
-                .map_or(thread::Info::Unknown, |thread| {
-                    thread::Info::CreatedUnknown(Box::new(thread.clone()))
-                }),
+            thread_info,
             webhook: None,
             later_messages: later_messages::Info {
                 messages: vec![],

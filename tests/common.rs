@@ -4,7 +4,7 @@ use dotenvy::dotenv;
 use sparkle_impostor::{error::Error, MessageSource};
 use twilight_http::{request::channel::message::CreateMessage, Client};
 use twilight_model::{
-    channel::{ChannelType, Message},
+    channel::Message,
     guild::Member,
     id::{
         marker::{ChannelMarker, EmojiMarker, GuildMarker},
@@ -109,21 +109,26 @@ impl Context {
     }
 }
 
+#[allow(dead_code)]
+pub async fn create_later_messages(
+    mut message_source: MessageSource<'_>,
+) -> Result<(), anyhow::Error> {
+    let later_messages = message_source.later_messages().await?;
+    assert!(later_messages.iter().all(Result::is_ok));
+
+    for later_message in later_messages {
+        later_message?.create().await?;
+    }
+
+    Ok(())
+}
+
 async fn create_not_last_source_thread(
     http: &Client,
     channel_id: Id<ChannelMarker>,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
-    let thread = http
-        .create_thread(
-            channel_id,
-            "sparkle impostor create later messages source",
-            ChannelType::PublicThread,
-        )?
-        .await?
-        .model()
-        .await?;
-
-    http.create_message(thread.id)
+    let message = http
+        .create_message(channel_id)
         .content(
             "create later messages *(this and messages below should be cloned to another thread \
              in order)*",
@@ -132,10 +137,18 @@ async fn create_not_last_source_thread(
         .model()
         .await?;
 
+    http.create_thread_from_message(
+        channel_id,
+        message.id,
+        "sparkle impostor create later messages source",
+    )?
+    .await?;
+
+    let thread_id = message.id.cast();
     for n in 1..=50_u8 {
         for i in 0..=3_u8 {
             match http
-                .create_message(thread.id)
+                .create_message(thread_id)
                 .content(&n.to_string())?
                 .await
             {
@@ -159,13 +172,14 @@ async fn create_not_last_source_thread(
         }
     }
 
-    Ok(thread.id)
+    Ok(thread_id)
 }
 
 fn _source_construct() {
     drop(MessageSource {
         source_id: Id::new(1),
         source_channel_id: Id::new(1),
+        source_thread_id: None,
         content: String::new(),
         embeds: &[],
         tts: false,
