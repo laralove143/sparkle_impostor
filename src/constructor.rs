@@ -1,18 +1,12 @@
 use twilight_http::Client;
-use twilight_model::{
-    channel::{
-        message::{MessageFlags, MessageType},
-        Message,
-    },
-    id::{
-        marker::{GuildMarker, UserMarker},
-        Id,
-    },
-    util::ImageHash,
+use twilight_model::channel::{
+    message::{MessageFlags, MessageType},
+    Message,
 };
 
 use crate::{
-    attachment, component, error::Error, later_messages, reaction, sticker, thread, MessageSource,
+    attachment, avatar, component, error::Error, later_messages, reaction, sticker, thread,
+    MessageSource,
 };
 
 impl<'a> MessageSource<'a> {
@@ -87,13 +81,14 @@ impl<'a> MessageSource<'a> {
                 .and_then(|member| member.nick.as_ref())
                 .unwrap_or(&message.author.name)
                 .clone(),
-            avatar_url: avatar_url(
-                message.author.id,
+            avatar_info: avatar::Info {
+                url: None,
+                user_id: message.author.id,
                 guild_id,
-                message.author.discriminator,
-                message.author.avatar,
-                message.member.as_ref().and_then(|member| member.avatar),
-            ),
+                user_discriminator: message.author.discriminator,
+                user_avatar: message.author.avatar,
+                member_avatar: message.member.as_ref().and_then(|member| member.avatar),
+            },
             webhook_name: "Message Cloner".to_owned(),
             sticker_info: sticker::Info {
                 exists: !message.sticker_items.is_empty(),
@@ -121,37 +116,5 @@ impl<'a> MessageSource<'a> {
             response: None,
             http,
         })
-    }
-}
-
-#[allow(clippy::option_if_let_else)]
-fn avatar_url(
-    user_id: Id<UserMarker>,
-    guild_id: Id<GuildMarker>,
-    user_discriminator: u16,
-    user_avatar: Option<ImageHash>,
-    member_avatar: Option<ImageHash>,
-) -> String {
-    if let Some(avatar) = member_avatar {
-        format!(
-            "https://cdn.discordapp.com/guilds/{guild_id}/users/{}/avatars/{avatar}.{}",
-            user_id,
-            if avatar.is_animated() { "gif" } else { "png" }
-        )
-    } else if let Some(avatar) = user_avatar {
-        format!(
-            "https://cdn.discordapp.com/avatars/{}/{avatar}.{}",
-            user_id,
-            if avatar.is_animated() { "gif" } else { "png" }
-        )
-    } else {
-        format!(
-            "https://cdn.discordapp.com/embed/avatars/{}.png",
-            if user_discriminator == 0 {
-                (user_id.get() >> 22_u8) % 6
-            } else {
-                u64::from(user_discriminator % 5)
-            }
-        )
     }
 }

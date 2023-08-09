@@ -114,6 +114,7 @@ use twilight_model::{
 use crate::error::Error;
 
 pub mod attachment;
+pub mod avatar;
 pub mod component;
 mod constructor;
 mod delete;
@@ -169,15 +170,16 @@ pub struct MessageSource<'a> {
     pub channel_id: Id<ChannelMarker>,
     /// ID of the guild the message is in
     pub guild_id: Id<GuildMarker>,
-    /// Emoji IDs of the guild the message is in, `None` if it has never
-    /// been needed
+    /// Emoji IDs of the guild the message is in
+    ///
+    /// `None` if it has never been needed
     pub guild_emoji_ids: Option<Vec<Id<EmojiMarker>>>,
     /// Username of the message's author
     pub username: String,
-    /// URL of message author's avatar
-    pub avatar_url: String,
     /// Name to be used for the webhook that will be used to create the message
     pub webhook_name: String,
+    /// Info about the message's avatar
+    pub avatar_info: avatar::Info,
     /// Info about the message's stickers
     pub sticker_info: sticker::Info,
     /// Info about the message's reactions
@@ -192,8 +194,9 @@ pub struct MessageSource<'a> {
     pub later_messages: later_messages::Info,
     /// Webhook ID and token to execute to clone messages with
     pub webhook: Option<(Id<WebhookMarker>, String)>,
-    /// Cloned message's response, `None` if [`MessageSource::create`] wasn't
-    /// called
+    /// Cloned message's response
+    ///
+    /// `None` if [`MessageSource::create`] wasn't called
     pub response: Option<response::MaybeDeserialized<Message>>,
     /// The client to use for requests
     pub http: &'a Client,
@@ -245,6 +248,7 @@ impl<'a> MessageSource<'a> {
     /// If the message was used to create a post but the post's name is `None`
     pub async fn create(mut self) -> Result<MessageSource<'a>, Error> {
         self.set_webhook().await?;
+        self.avatar_info.set_url();
 
         for i in 0..=5_u8 {
             match self.webhook_exec()?.await {
@@ -323,7 +327,7 @@ impl<'a> MessageSource<'a> {
             .embeds(self.embeds)?
             .components(&self.component_info.url_components)?
             .username(&self.username)?
-            .avatar_url(&self.avatar_url)
+            .avatar_url(self.avatar_info.url.as_ref().unwrap())
             .tts(self.tts);
 
         match &self.thread_info {
