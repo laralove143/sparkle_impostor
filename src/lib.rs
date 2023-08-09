@@ -240,12 +240,6 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::MessageValidation`] if the given message is invalid,
     /// shouldn't happen unless the message was mutated
-    ///
-    /// # Panics
-    ///
-    /// If the webhook that was just created doesn't have a token
-    ///
-    /// If the message was used to create a post but the post's name is `None`
     pub async fn create(mut self) -> Result<MessageSource<'a>, Error> {
         self.set_webhook().await?;
         self.avatar_info.set_url();

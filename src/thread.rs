@@ -60,10 +60,7 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::Http`] if getting the channel fails
     ///
     /// Returns [`Error::DeserializeBody`] if deserializing the channel fails
-    ///
-    /// # Panics
-    ///
-    /// If the thread's parent ID is `None`
+    #[allow(clippy::missing_panics_doc)]
     pub async fn handle_thread(mut self) -> Result<MessageSource<'a>, Error> {
         if !matches!(self.thread_info, Info::Unknown | Info::CreatedUnknown(_)) {
             return Ok(self);
@@ -111,8 +108,6 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::DeserializeBody`] if deserializing the thread fails
     ///
     /// # Panics
-    ///
-    /// If the thread's name is `None`
     ///
     /// If called before [`MessageSource::create`]
     pub async fn handle_thread_created(mut self) -> Result<MessageSource<'a>, Error> {
