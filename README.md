@@ -3,13 +3,36 @@
 A third party crate for [Twilight](https://github.com/twilight-rs/twilight) to execute Discord webhooks that clone an
 existing message
 
-## 🤷 Why?
+## ✨ Features
 
-My bots use it, it's open source because why not
+> This has grown to be a more complicated _(and painful)_ project than expected, so let me list what it does
+
+Opt-in features for edge-cases:
+
+- Clone attachments or stickers by linking to them or re-uploading them
+- Clone URL components
+- Clone messages sent after the original message
+- Clone reactions
+- Clone references by putting an embed
+- Clone messages in a thread/forum post or messages used to start a thread/forum post
+- Sanitize invalid usernames
+- Delete the original message and messages sent after
+
+General features:
+
+- Replicate the author's user or member avatar, embeds, anything possible
+- Handle rate-limit retries
+- Builder-pattern to keep your code clean
+- Avoid clones and unnecessary deserialization
+- Widely tested with integration tests _(Almost 1:1 LOC for source and tests)_
 
 ## 📦 Cargo Features
 
 - `upload`: Enables methods for re-uploading attachments
+
+## 🙏 Feedback
+
+Although widely tested, there may still be bugs, or you might have feature suggestions, please create issues for these!
 
 ## 🧪 Testing
 
