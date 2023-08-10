@@ -21,7 +21,9 @@ impl MessageSource<'_> {
     /// [`WEBHOOK_USERNAME_LIMIT_MIN`] characters and under 6 characters
     #[must_use]
     pub fn sanitize_username(mut self, append: &str, replace: &str) -> Self {
-        if let Err(ValidationErrorType::WebhookUsername { len, substring }) = self.check_username()
+        if let Err(ValidationErrorType::WebhookUsername { len, substring }) =
+            twilight_validate::request::webhook_username(&self.username)
+                .map_err(|err| err.into_parts().0)
         {
             if let Some(len_inner) = len {
                 if len_inner < WEBHOOK_USERNAME_LIMIT_MIN {
@@ -43,19 +45,5 @@ impl MessageSource<'_> {
         }
 
         self
-    }
-
-    /// Check that the author's username is valid
-    ///
-    /// You can use this method when [`MessageSource::sanitize_username`] isn't
-    /// enough
-    ///
-    /// # Errors
-    ///
-    /// [`ValidationErrorType::WebhookUsername`] if the username is invalid
-    pub fn check_username(&self) -> Result<(), ValidationErrorType> {
-        twilight_validate::request::webhook_username(&self.username)
-            .map_err(|err| err.into_parts().0)?;
-        Ok(())
     }
 }

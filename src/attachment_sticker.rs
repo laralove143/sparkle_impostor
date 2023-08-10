@@ -20,34 +20,6 @@ pub struct Info<'a> {
 }
 
 impl MessageSource<'_> {
-    /// Check that the message has no attachments
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::Attachment`] if the message has an attachment
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn check_attachment(self) -> Result<Self, Error> {
-        if !self.attachment_sticker_info.attachments.is_empty() {
-            return Err(Error::Attachment);
-        }
-
-        Ok(self)
-    }
-
-    /// Check that the message has no stickers
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::Sticker`] if the message has a sticker
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn check_sticker(self) -> Result<Self, Error> {
-        if !self.attachment_sticker_info.stickers.is_empty() {
-            return Err(Error::Sticker);
-        }
-
-        Ok(self)
-    }
-
     /// Append links to the attachments into the message content
     ///
     /// If the attachment is an image, it's embedded in the client
