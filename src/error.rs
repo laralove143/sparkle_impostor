@@ -38,6 +38,9 @@ pub enum Error {
     /// Source message has a sticker
     #[error("source message has a sticker")]
     Sticker,
+    /// Sticker in message can't be linked to
+    #[error("sticker in message can't be linked to")]
+    StickerLinkInvalid,
     /// Source message has an attachment
     #[error("source message has an attachment")]
     Attachment,

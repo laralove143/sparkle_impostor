@@ -197,9 +197,9 @@ fn _source_construct() {
             member_avatar: None,
         },
         webhook_name: String::new(),
-        sticker_info: sparkle_impostor::sticker::Info { exists: false },
         reaction_info: sparkle_impostor::reaction::Info { reactions: &[] },
-        attachment_info: sparkle_impostor::attachment::Info {
+        attachment_sticker_info: sparkle_impostor::attachment_sticker::Info {
+            stickers: &[],
             attachments: &[],
             #[cfg(feature = "upload")]
             attachments_upload: vec![],

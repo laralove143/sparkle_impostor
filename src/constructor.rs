@@ -5,7 +5,7 @@ use twilight_model::channel::{
 };
 
 use crate::{
-    attachment, avatar, component, error::Error, later_messages, reaction, sticker, thread,
+    attachment_sticker, avatar, component, error::Error, later_messages, reaction, thread,
     MessageSource,
 };
 
@@ -90,13 +90,11 @@ impl<'a> MessageSource<'a> {
                 member_avatar: message.member.as_ref().and_then(|member| member.avatar),
             },
             webhook_name: "Message Cloner".to_owned(),
-            sticker_info: sticker::Info {
-                exists: !message.sticker_items.is_empty(),
-            },
             reaction_info: reaction::Info {
                 reactions: &message.reactions,
             },
-            attachment_info: attachment::Info {
+            attachment_sticker_info: attachment_sticker::Info {
+                stickers: &message.sticker_items,
                 attachments: &message.attachments,
                 #[cfg(feature = "upload")]
                 attachments_upload: vec![],

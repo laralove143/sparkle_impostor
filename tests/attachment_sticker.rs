@@ -1,6 +1,6 @@
 use common::Context;
 use sparkle_impostor::error::Error;
-use twilight_model::http::attachment::Attachment;
+use twilight_model::{channel::message::sticker::StickerFormatType, http::attachment::Attachment};
 use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
 mod common;
@@ -32,6 +32,44 @@ async fn link() -> Result<(), anyhow::Error> {
 
     ctx.message_source(&mut message)?
         .handle_attachment_link()?
+        .create()
+        .await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn sticker_link() -> Result<(), anyhow::Error> {
+    let ctx = Context::new().await;
+
+    let Some(sticker) = ctx
+        .http
+        .guild_stickers(ctx.guild_id)
+        .await?
+        .models()
+        .await?
+        .into_iter()
+        .find(|sticker| !matches!(
+                sticker.format_type, StickerFormatType::Lottie | StickerFormatType::Unknown(_)
+        )) else {
+        ctx.create_message()
+            .content(
+                "can't test sticker links, guild doesn't have non-lottie sticker"
+            )?
+            .await?;
+        return Ok(());
+    };
+
+    let mut message = ctx
+        .create_message()
+        .content("sticker link *(should be cloned with sticker links at the bottom)*")?
+        .sticker_ids(&[sticker.id])?
+        .await?
+        .model()
+        .await?;
+
+    ctx.message_source(&mut message)?
+        .handle_sticker_link()?
         .create()
         .await?;
 

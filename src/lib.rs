@@ -113,7 +113,7 @@ use twilight_model::{
 
 use crate::error::Error;
 
-pub mod attachment;
+pub mod attachment_sticker;
 pub mod avatar;
 pub mod component;
 mod constructor;
@@ -122,7 +122,6 @@ pub mod error;
 pub mod later_messages;
 pub mod reaction;
 pub mod response;
-pub mod sticker;
 pub mod thread;
 mod username;
 
@@ -180,12 +179,10 @@ pub struct MessageSource<'a> {
     pub webhook_name: String,
     /// Info about the message's avatar
     pub avatar_info: avatar::Info,
-    /// Info about the message's stickers
-    pub sticker_info: sticker::Info,
     /// Info about the message's reactions
     pub reaction_info: reaction::Info<'a>,
     /// Info about the message's attachments
-    pub attachment_info: attachment::Info<'a>,
+    pub attachment_sticker_info: attachment_sticker::Info<'a>,
     /// Info about the message's components
     pub component_info: component::Info,
     /// Info about the message's thread
@@ -339,7 +336,7 @@ impl<'a> MessageSource<'a> {
         #[cfg(feature = "upload")]
         {
             execute_webhook =
-                execute_webhook.attachments(&self.attachment_info.attachments_upload)?;
+                execute_webhook.attachments(&self.attachment_sticker_info.attachments_upload)?;
         }
 
         // not waiting causes race condition issues in the client
