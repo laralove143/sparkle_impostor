@@ -121,6 +121,7 @@ mod delete;
 pub mod error;
 pub mod later_messages;
 pub mod reaction;
+pub mod reference;
 pub mod response;
 pub mod thread;
 mod username;
@@ -158,7 +159,7 @@ pub struct MessageSource<'a> {
     /// Content of the message
     pub content: String,
     /// Embeds in the message
-    pub embeds: &'a [Embed],
+    pub embeds: Vec<Embed>,
     /// Whether the message has text-to-speech enabled
     pub tts: bool,
     /// Flags of the message
@@ -179,6 +180,8 @@ pub struct MessageSource<'a> {
     pub webhook_name: String,
     /// Info about the message's avatar
     pub avatar_info: avatar::Info,
+    /// Info about the message's reference
+    pub reference_info: reference::Info<'a>,
     /// Info about the message's reactions
     pub reaction_info: reaction::Info<'a>,
     /// Info about the message's attachments
@@ -315,7 +318,7 @@ impl<'a> MessageSource<'a> {
             .http
             .execute_webhook(*webhook_id, webhook_token)
             .content(&self.content)?
-            .embeds(self.embeds)?
+            .embeds(&self.embeds)?
             .components(&self.component_info.url_components)?
             .username(&self.username)?
             .avatar_url(self.avatar_info.url.as_ref().unwrap())

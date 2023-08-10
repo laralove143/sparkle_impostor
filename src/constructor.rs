@@ -5,8 +5,8 @@ use twilight_model::channel::{
 };
 
 use crate::{
-    attachment_sticker, avatar, component, error::Error, later_messages, reaction, thread,
-    MessageSource,
+    attachment_sticker, avatar, component, error::Error, later_messages, reaction, reference,
+    thread, MessageSource,
 };
 
 impl<'a> MessageSource<'a> {
@@ -57,6 +57,17 @@ impl<'a> MessageSource<'a> {
         let url_components = component::filter_valid(&message.components);
         let has_invalid_components = message.components != url_components;
 
+        let reference_info = message.referenced_message.as_ref().map_or_else(
+            || {
+                if message.kind == MessageType::Reply {
+                    reference::Info::UnknownOrDeleted
+                } else {
+                    reference::Info::None
+                }
+            },
+            |referenced_message| reference::Info::Reference(referenced_message),
+        );
+
         let thread_info = message
             .thread
             .as_ref()
@@ -69,7 +80,7 @@ impl<'a> MessageSource<'a> {
             source_channel_id: message.channel_id,
             source_thread_id: thread_info.id(),
             content: message.content.clone(),
-            embeds: &message.embeds,
+            embeds: message.embeds.clone(),
             tts: message.tts,
             flags: message.flags,
             channel_id: message.channel_id,
@@ -81,6 +92,7 @@ impl<'a> MessageSource<'a> {
                 .and_then(|member| member.nick.as_ref())
                 .unwrap_or(&message.author.name)
                 .clone(),
+            reference_info,
             avatar_info: avatar::Info {
                 url: None,
                 user_id: message.author.id,
