@@ -8,7 +8,7 @@ use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 use crate::{error::Error, thread, MessageSource};
 
 /// Info about the later messages in the channel
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Info {
     /// Messages sent later
     ///

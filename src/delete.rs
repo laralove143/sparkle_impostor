@@ -50,8 +50,8 @@ impl<'a> MessageSource<'a> {
     ///
     /// If there is a message older than two weeks, they'll be
     /// deleted individually since bulk delete isn't valid for these messages,
-    /// see [`MessageSource::check_delete_request_count_in`] if this is not the expected
-    /// behavior
+    /// see [`MessageSource::check_delete_request_count_in`] if this is not the
+    /// expected behavior
     ///
     /// # Errors
     ///

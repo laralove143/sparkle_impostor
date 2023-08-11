@@ -8,7 +8,7 @@ use twilight_model::channel::{
 use crate::{avatar, error::Error, MessageSource};
 
 /// Info about the message's reference
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Info<'a> {
     /// Message does not have a reference or it hasn't been checked
     None,

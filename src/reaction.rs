@@ -40,7 +40,7 @@ pub enum CheckBehavior {
 }
 
 /// Info about reactions in [`MessageSource`]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Info<'a> {
     /// Reactions in the message
     pub reactions: &'a [Reaction],
