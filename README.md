@@ -27,6 +27,45 @@ General features:
 - Avoid clones and unnecessary deserialization
 - Widely tested with integration tests _(Almost 1:1 LOC for source and tests)_
 
+## 😋 A Taste of Sparkle Impostor
+
+> This also serves as the example, since it includes most of the API surface
+
+<!-- @formatter:off -->
+```rust
+let mut source = MessageSource::from_message(&message, &http)
+    .expect("message really can't be cloned (voice message etc)");
+
+// example error handling
+if let Err(_) = source.check_component() {
+    panic!("invalid components scare me");
+}
+
+let later_messages = source.later_messages_batched().await?;
+
+// a lot of edge cases
+source
+    .webhook_name("custom modified exclusive webhook name".to_owned())
+    .handle_attachment_link()?
+    .handle_sticker_link()?
+    .handle_reaction()
+    .await?
+    .handle_reference()?
+    .handle_thread()
+    .await?
+    .sanitize_username("?", "????")
+    .create()
+    .await?
+    .handle_thread_created()
+    .await?;
+
+for later_message in later_messages {
+    // create every message sent later
+    later_message?.create().await?;
+}
+```
+<!-- @formatter:on -->
+
 ## 📦 Cargo Features
 
 - `upload`: Enables methods for re-uploading attachments
