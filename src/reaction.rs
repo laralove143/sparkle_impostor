@@ -1,4 +1,4 @@
-//! Handling the message to clone having reactions
+//! Handling the message having reactions
 
 use twilight_http::request::channel::reaction::RequestReactionType;
 #[cfg(doc)]

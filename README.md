@@ -11,7 +11,7 @@ Opt-in features for edge-cases:
 
 - Clone attachments or stickers by linking to them or re-uploading them
 - Clone URL components
-- Clone messages sent after the original message
+- Clone messages sent after the original message, even combining them to reduce webhook executions
 - Clone reactions
 - Clone references by putting an embed
 - Clone messages in a thread/forum post or messages used to start a thread/forum post
@@ -21,6 +21,7 @@ Opt-in features for edge-cases:
 General features:
 
 - Replicate the author's user or member avatar, embeds, anything possible
+- Change any info about the new message, for example to clone to another channel 
 - Handle rate-limit retries
 - Builder-pattern to keep your code clean
 - Avoid clones and unnecessary deserialization

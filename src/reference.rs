@@ -1,4 +1,4 @@
-//! Handling the message to clone having a reference
+//! Handling the message having a reference
 
 use twilight_model::channel::{
     message::{embed::EmbedAuthor, Embed},
@@ -7,7 +7,7 @@ use twilight_model::channel::{
 
 use crate::{avatar, error::Error, MessageSource};
 
-/// Info about reference in [`MessageSource`]
+/// Info about the message's reference
 #[derive(Debug, Clone, PartialEq)]
 pub enum Info<'a> {
     /// Message does not have a reference or it hasn't been checked

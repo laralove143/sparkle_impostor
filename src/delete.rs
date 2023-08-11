@@ -48,9 +48,9 @@ impl<'a> MessageSource<'a> {
     /// [`MessageSource::later_messages_batched`] was called, later messages
     /// will also be deleted
     ///
-    /// If there is a messages older than two weeks, they'll be
+    /// If there is a message older than two weeks, they'll be
     /// deleted individually since bulk delete isn't valid for these messages,
-    /// see [`MessageSource::check_delete_cheap`] if this is not the expected
+    /// see [`MessageSource::check_delete_request_count_in`] if this is not the expected
     /// behavior
     ///
     /// # Errors

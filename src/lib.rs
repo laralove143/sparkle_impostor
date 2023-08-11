@@ -223,11 +223,9 @@ impl<'a> MessageSource<'a> {
     /// Other methods on [`MessageSource`] are provided to handle edge-cases,
     /// not calling them before this may make this method fail
     ///
-    /// If the message has a reply, it will be stripped, since webhook messages
-    /// can't have replies
-    ///
     /// If calling this on the same webhook repeatedly, it's rate-limited on
-    /// every try after the 50th execution in tests
+    /// every try after the 50th execution in tests, though Discord may change
+    /// this in the future
     ///
     /// # Errors
     ///

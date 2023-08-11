@@ -1,4 +1,4 @@
-//! Handling the message to clone having attachments or stickers
+//! Handling the message having attachments or stickers
 
 #[cfg(feature = "reqwest")]
 use reqwest::Client;
@@ -7,7 +7,7 @@ use twilight_validate::message::MESSAGE_CONTENT_LENGTH_MAX;
 
 use crate::{error::Error, MessageSource};
 
-/// Info about attachments and stickers in [`MessageSource`]
+/// Info about attachments and stickers in the message
 #[derive(Clone, Debug, PartialEq)]
 pub struct Info<'a> {
     /// Stickers in the message

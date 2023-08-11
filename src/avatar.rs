@@ -8,7 +8,7 @@ use twilight_model::{
     util::ImageHash,
 };
 
-/// Info about the avatar of [`MessageSource`]
+/// Info about the avatar of the message
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Info {
     /// Avatar's URL

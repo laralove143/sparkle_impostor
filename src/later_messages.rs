@@ -1,4 +1,4 @@
-//! Handling the message to clone not being the last one in the channel
+//! Handling the message not being the last one in the channel
 
 use twilight_model::channel::Message;
 #[cfg(doc)]

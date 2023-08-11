@@ -1,4 +1,4 @@
-//! Handling the message to clone being in a thread
+//! Handling the message being in a thread
 
 use twilight_model::{
     channel::{Channel, ChannelType},
@@ -7,7 +7,7 @@ use twilight_model::{
 
 use crate::{error::Error, MessageSource};
 
-/// Thread [`MessageSource`] is in
+/// Info about the thread the message is in
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Info {
     /// Message is in a thread, but the thread hasn't been created from the

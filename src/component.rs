@@ -1,4 +1,4 @@
-//! Handling the message to clone having components
+//! Handling the message having components
 
 use twilight_model::channel::message::{component::ActionRow, Component};
 
