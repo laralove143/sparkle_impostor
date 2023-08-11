@@ -60,6 +60,11 @@ impl<'a> MessageSource<'a> {
     /// - [`Permissions::READ_MESSAGE_HISTORY`]
     /// - [`Permissions::VIEW_CHANNEL`]
     ///
+    /// Returned message sources don't implicitly call the same methods as
+    /// `self`, this is intentional so that you can choose what to handle
+    /// yourself, if you want to handle each one the same way, simply extract
+    /// it to a function
+    ///
     /// # Warnings
     ///
     /// This method is potentially very expensive unless
