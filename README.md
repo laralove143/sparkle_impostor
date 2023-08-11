@@ -1,5 +1,9 @@
 # ✨🥸 Sparkle Impostor
 
+- 🗄️ [GitHub](https://github.com/laralove143/sparkle-impostor)
+- 📦 [crates.io](https://crates.io/crates/sparkle-impostor)
+- 📖 [docs.rs](https://docs.rs/sparkle-impostor/latest)
+
 A third party crate for [Twilight](https://github.com/twilight-rs/twilight) to execute Discord webhooks that clone an
 existing message
 
