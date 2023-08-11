@@ -48,10 +48,10 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::DeserializeBody`] if deserializing channel messages
     /// fails
-    pub async fn check_is_in_last(mut self, n: u16) -> Result<MessageSource<'a>, Error> {
+    pub async fn check_is_in_last(&mut self, n: u16) -> Result<(), Error> {
         self.set_later_messages(Some(n)).await?;
 
-        Ok(self)
+        Ok(())
     }
 
     /// Return [`MessageSource`] for messages sent after this

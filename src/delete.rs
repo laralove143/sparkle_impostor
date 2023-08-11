@@ -27,7 +27,7 @@ impl<'a> MessageSource<'a> {
     ///
     /// Returns [`Error::DeleteRequestCountAboveLimit`] if
     /// [`MessageSource::delete`] would use more than `n` requests
-    pub fn check_delete_request_count_in(self, n: u16) -> Result<MessageSource<'a>, Error> {
+    pub fn check_delete_request_count_in(&self, n: u16) -> Result<(), Error> {
         let messages_delete = self.messages_delete();
 
         if messages_delete
@@ -39,7 +39,7 @@ impl<'a> MessageSource<'a> {
             return Err(Error::DeleteRequestCountAboveLimit(n));
         }
 
-        Ok(self)
+        Ok(())
     }
 
     /// Delete the original message

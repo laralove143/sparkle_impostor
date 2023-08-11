@@ -84,10 +84,7 @@ impl<'a> MessageSource<'a> {
     /// Returns [`Error::DeserializeBody`] if [`CheckBehavior::NotExternal`] was
     /// passed and deserializing guild emojis fails
     #[allow(clippy::missing_panics_doc)]
-    pub async fn check_reaction(
-        mut self,
-        behavior: CheckBehavior,
-    ) -> Result<MessageSource<'a>, Error> {
+    pub async fn check_reaction(&mut self, behavior: CheckBehavior) -> Result<(), Error> {
         match behavior {
             CheckBehavior::None if !self.reaction_info.reactions.is_empty() => Err(Error::Reaction),
             CheckBehavior::Limit(limit)
@@ -109,7 +106,7 @@ impl<'a> MessageSource<'a> {
             }
             CheckBehavior::NotExternal => {
                 if !custom_emoji_exists(self.reaction_info.reactions) {
-                    return Ok(self);
+                    return Ok(());
                 }
 
                 self.set_guild_emojis().await?;
@@ -120,9 +117,9 @@ impl<'a> MessageSource<'a> {
                     return Err(Error::ReactionExternal);
                 }
 
-                Ok(self)
+                Ok(())
             }
-            _ => Ok(self),
+            _ => Ok(()),
         }
     }
 

@@ -22,13 +22,12 @@ impl MessageSource<'_> {
     ///
     /// Returns [`Error::Component`] if the message has a non-URL
     /// component
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn check_component(self) -> Result<Self, Error> {
+    pub const fn check_component(&self) -> Result<(), Error> {
         if self.component_info.has_invalid_components {
             return Err(Error::Component);
         }
 
-        Ok(self)
+        Ok(())
     }
 }
 
